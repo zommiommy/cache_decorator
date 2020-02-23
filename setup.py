@@ -62,7 +62,8 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
-        "compress_pickle"
+        "compress_pickle",
+        "dict_hash",
     ],
     extras_require=extras,
 )
