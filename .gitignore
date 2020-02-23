@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Caches of the tests
+test_cache
+
 # C extensions
 *.so
 
