@@ -66,6 +66,7 @@ setup(
         "dict_hash",
         "openpyxl",
         "xlrd",
+        "compress_json",
     ],
     extras_require=extras,
 )
