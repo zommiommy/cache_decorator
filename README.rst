@@ -91,15 +91,15 @@ To cache a function or a method you just have to decorate it with the cache deco
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache()
+    @Cache()
     def x(a, b):
         sleep(3)
         return a + b
 
     class A:
-        @cache()
+        @Cache()
         def x(self, a, b):
             sleep(3)
             return a + b
@@ -112,9 +112,9 @@ One can specify which parameters should be ignored.
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache(args_to_ignore=["verbose"])
+    @Cache(args_to_ignore=["verbose"])
     def x(a, verbose=False):
         sleep(3)
         if verbose:
@@ -126,9 +126,9 @@ Multiple arguments can be specified as a list of strings with the name of the ar
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache(args_to_ignore=["verbose", "multiprocessing"])
+    @Cache(args_to_ignore=["verbose", "multiprocessing"])
     def x(a, verbose=False, multiprocessing=False):
         sleep(3)
         if verbose:
@@ -142,9 +142,9 @@ In the case both are setted, the parameter folder has precedence over the enviro
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache(cache_dir="/tmp")
+    @Cache(cache_dir="/tmp")
     def x(a):
         sleep(3)
         return a
@@ -157,9 +157,9 @@ De default path is:
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache(cache_path="{cache_dir}/{file_name}_{function_name}/{_hash}.pkl")
+    @Cache(cache_path="{cache_dir}/{file_name}_{function_name}/{_hash}.pkl")
     def x(a):
         sleep(3)
         return a
@@ -169,9 +169,9 @@ But can be modified giving cache a more significative name, for example we can a
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache(cache_path="{cache_dir}/{file_name}_{function_name}/{a}_{_hash}.pkl")
+    @Cache(cache_path="{cache_dir}/{file_name}_{function_name}/{a}_{_hash}.pkl")
     def x(a):
         sleep(3)
         return a
@@ -181,24 +181,24 @@ Depending on the extension of the file, different serialization and deserializat
 .. code:: python
 
     from time import sleep
-    from cache_decorator import cache
+    from cache_decorator import Cache
 
-    @cache(cache_path="/tmp/{_hash}.pkl.gz")
+    @Cache(cache_path="/tmp/{_hash}.pkl.gz")
     def x(a):
         sleep(3)
         return a
 
-    @cache(cache_path="/tmp/{_hash}.json")
+    @Cache(cache_path="/tmp/{_hash}.json")
     def x(a):
         sleep(3)
         return {"1":1,"2":2}
 
-    @cache(cache_path="/tmp/{_hash}.npy")
+    @Cache(cache_path="/tmp/{_hash}.npy")
     def x(a):
         sleep(3)
         return np.array([1, 2, 3])
 
-    @cache(cache_path="/tmp/{_hash}.npz")
+    @Cache(cache_path="/tmp/{_hash}.npz")
     def x(a):
         sleep(3)
         return np.array([1, 2, 3]), np.array([1, 2, 4])
