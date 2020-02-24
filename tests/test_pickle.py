@@ -8,28 +8,26 @@ from cache_decorator import cache
 )
 def cached_function(a):
     sleep(2)
+    return [1, 2, 3]
+
 
 def test_cache():
     # not cached iteration
     start = perf_counter()
-    cached_function(1)
+    result_1 = cached_function(1)
     time_iteration_1 = perf_counter() - start
-    print(time_iteration_1)
-
     # cached iteration
     start = perf_counter()
-    cached_function(1)
+    result_2 = cached_function(1)
     time_iteration_2 = perf_counter() - start
-    print(time_iteration_2)
-
     # Use a different cache
     start = perf_counter()
     cached_function(2)
     time_iteration_3 = perf_counter() - start
-    print(time_iteration_3)
 
     assert time_iteration_1 >= time_iteration_2
     assert time_iteration_3 >= time_iteration_2
+    assert result_1 == result_2
 
     # Clear the caches
     rmtree("./test_cache")

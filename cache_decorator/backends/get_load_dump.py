@@ -17,4 +17,4 @@ def get_load_dump_from_path(path):
         if path.endswith(key):
             return data["load"], data["dump"]
             
-    raise ValueError("The extension is not known. The available one are {}".format(total_dict.keys()))
+    raise ValueError("The extension is not known. The available one are {}".format(list(total_dict.keys())))

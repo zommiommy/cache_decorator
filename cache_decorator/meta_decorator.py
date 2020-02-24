@@ -16,7 +16,7 @@ def meta_decorator(load, dump, _cache_dir, cache_path, args_to_ignore):
             "file_name": os.path.splitext(os.path.basename(inspect.getsourcefile(func)))[0],
         }
         # List of the arguments names
-        args_name, *_ = inspect.getargspec(func)
+        args_name, *_ = inspect.getfullargspec(func)
         # check if the callable to decorate is a method or else
         if inspect.ismethod(func):
             decorator = decore_method
