@@ -1,4 +1,3 @@
-import os
 import numpy as np
 from shutil import rmtree
 from time import sleep, perf_counter

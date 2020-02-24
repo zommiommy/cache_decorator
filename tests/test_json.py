@@ -1,4 +1,3 @@
-import os
 from shutil import rmtree
 from time import sleep, perf_counter
 from cache_decorator import cache
