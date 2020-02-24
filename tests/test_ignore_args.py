@@ -1,6 +1,7 @@
 from shutil import rmtree
 from time import sleep, perf_counter
 from cache_decorator import cache
+import numpy as np
 
 @cache(
     cache_dir="./test_cache",
@@ -27,7 +28,7 @@ def test_cache():
 
     assert time_iteration_1 >= time_iteration_2
     assert time_iteration_3 >= time_iteration_2
-    assert result_1 == result_2
+    assert np.isclose(result_1, result_2)
 
     # Clear the caches
     rmtree("./test_cache")
