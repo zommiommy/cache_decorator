@@ -64,6 +64,7 @@ setup(
         "pandas",
         "compress_pickle",
         "dict_hash",
+        "openpyxl",
     ],
     extras_require=extras,
 )
