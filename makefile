@@ -14,4 +14,4 @@ build:
 	$(PYTHON_PATH)python setup.py sdist
 
 publish:
-	twine upload "./dist/$$(ls ./dist | grep .tar.gz | sort | tail -n 1)"
+	$(PYTHON_PATH)twine upload "./dist/$$(ls ./dist | grep .tar.gz | sort | tail -n 1)"
