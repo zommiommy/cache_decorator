@@ -28,7 +28,7 @@ def test_cache():
 
     assert time_iteration_1 >= time_iteration_2
     assert time_iteration_3 >= time_iteration_2
-    assert np.isclose(result_1, result_2)
+    assert np.isclose(result_1, result_2).all()
 
     # Clear the caches
     rmtree("./test_cache")
