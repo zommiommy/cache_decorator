@@ -18,7 +18,9 @@ def meta_decorator(load, dump, _cache_dir, cache_path, args_to_ignore):
         # List of the arguments names
         args_name, *_ = inspect.getfullargspec(func)
         # check if the callable to decorate is a method or else
-        if inspect.ismethod(func):
+        # inspect.ismethod(func) seems not to works so I'll check
+        # if the first arg is self
+        if args_name[0] == "self":
             decorator = decore_method
         else:
             decorator = decore_function

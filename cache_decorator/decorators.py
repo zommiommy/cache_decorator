@@ -47,5 +47,7 @@ def decore_method(func, load, dump, function_info, cache_path, args_to_ignore, a
             **to_hash,
             **vars(self)
             )
+        # merge self to the other args
+        args = [self] + list(args)
         return cache_logic(path, func, args, kwargs, load, dump)
     return wrapped
