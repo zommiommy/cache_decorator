@@ -1,6 +1,7 @@
+from time import sleep
 from shutil import rmtree
-from time import sleep, perf_counter
 from cache_decorator import cache
+from .utils import standard_test
 
 @cache(
     cache_path="{cache_dir}/{_hash}.json",
@@ -16,22 +17,6 @@ def cached_function(a):
     }
 
 def test_json():
-    # not cached iteration
-    start = perf_counter()
-    result_1 = cached_function(1)
-    time_iteration_1 = perf_counter() - start
-    # cached iteration
-    start = perf_counter()
-    result_2 = cached_function(1)
-    time_iteration_2 = perf_counter() - start
-    # Use a different cache
-    start = perf_counter()
-    cached_function(2)
-    time_iteration_3 = perf_counter() - start
-
-    assert time_iteration_1 >= time_iteration_2
-    assert time_iteration_3 >= time_iteration_2
+    result_1, result_2 = standard_test(cached_function)
     assert result_1 == result_2
-
-    # Clear the caches
     rmtree("./test_cache")

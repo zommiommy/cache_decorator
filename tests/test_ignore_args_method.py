@@ -1,6 +1,7 @@
+from time import sleep
 from shutil import rmtree
-from time import sleep, perf_counter
 from cache_decorator import cache
+from .utils import standard_test_array
 
 class A:
     def __init__(self):
@@ -8,31 +9,15 @@ class A:
     
     @cache(
         cache_dir="./test_cache",
-        args_to_ignore=["x"],
+        args_to_ignore=["x"]
+        
         )
     def cached_function(self, a, x):
         sleep(2)
         return [1, 2, 3]
 
 
-def test_cache():
+def test_ignore_args_method():
     a = A()
-    # not cached iteration
-    start = perf_counter()
-    result_1 = a.cached_function(1, 1)
-    time_iteration_1 = perf_counter() - start
-    # cached iteration
-    start = perf_counter()
-    result_2 = a.cached_function(1, 0)
-    time_iteration_2 = perf_counter() - start
-    # Use a different cache
-    start = perf_counter()
-    a.cached_function(2, 2)
-    time_iteration_3 = perf_counter() - start
-
-    assert time_iteration_1 >= time_iteration_2
-    assert time_iteration_3 >= time_iteration_2
-    assert result_1 == result_2
-
-    # Clear the caches
+    standard_test_array(a.cached_function, args=((1,2), (1,3), (2,2)))
     rmtree("./test_cache")
