@@ -3,7 +3,7 @@ from time import sleep, perf_counter
 from cache_decorator import cache
 
 @cache(
-    cache_path="{cache_dir}/{_hash}.pkl.lzma",
+    cache_path="{cache_dir}/{_hash}.pkl.asdfsfa",
     cache_dir="./test_cache"
 )
 def cached_function(a):
