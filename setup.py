@@ -65,6 +65,7 @@ setup(
         "compress_pickle",
         "dict_hash",
         "openpyxl",
+        "xlrd",
     ],
     extras_require=extras,
 )
