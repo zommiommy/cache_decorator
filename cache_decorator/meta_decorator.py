@@ -21,8 +21,10 @@ def meta_decorator(load, dump, _cache_dir, cache_path, args_to_ignore):
         # inspect.ismethod(func) seems not to works so I'll check
         # if the first arg is self
         if args_name[0] == "self":
-            args_name = args_name[1:]
             decorator = decore_method
+            # Remove self from the arguments since
+            # it's not passed by the user
+            args_name = args_name[1:]
         else:
             decorator = decore_function
         # Decore the callable
