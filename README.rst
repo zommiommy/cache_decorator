@@ -32,6 +32,29 @@ As usual, just download it using pip:
 
     pip install cache_decorator
 
+Examples of Usage
+----------------------------------------------
+To cache a function or a method you just have to decorate it with the cache decorator.
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import cache
+
+    @cache()
+    def x(a, b):
+        sleep(3)
+        return a + b
+
+    class A:
+        @cache
+        def x(self, a, b):
+            sleep(3)
+            return a + b
+
+
+
+
 Tests Coverage
 ----------------------------------------------
 Since some software handling coverages sometime
