@@ -9,6 +9,9 @@ The package automatically serialize and deserialize depending on the format of t
 Currently it supports:
 
 - .json
+- .json.gz
+- .json.bz
+- .json.lzma
 - .pkl
 - .pkl.gz
 - .pkl.bz
