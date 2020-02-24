@@ -1,10 +1,10 @@
 import numpy as np
 from time import sleep
 from shutil import rmtree
-from cache_decorator import cache
+from cache_decorator import Cache
 from .utils import standard_test_arrays
 
-@cache(
+@Cache(
     cache_path="{cache_dir}/{_hash}.npz",
     cache_dir="./test_cache"
 )

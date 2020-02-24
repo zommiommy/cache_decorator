@@ -1,13 +1,13 @@
 from time import sleep
 from shutil import rmtree
-from cache_decorator import cache
+from cache_decorator import Cache
 from .utils import standard_test_array
 
 class A:
     def __init__(self):
         pass
     
-    @cache(cache_dir="./test_cache")
+    @Cache(cache_dir="./test_cache")
     def cached_function(self, a):
         sleep(2)
         return [1, 2, 3]

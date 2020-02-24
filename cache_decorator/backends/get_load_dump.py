@@ -11,7 +11,7 @@ total_dict = {
 }
 
 
-def get_load_dump_from_path(path):
+def get_load_dump_from_path(path : str):
     for key, data in total_dict.items():
         if path.endswith(key):
             return data["load"], data["dump"]

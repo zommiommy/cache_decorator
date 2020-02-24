@@ -176,23 +176,6 @@ But can be modified giving cache a more significative name, for example we can a
         sleep(3)
         return a
 
-Or we could also add values from the self.
-
-.. code:: python
-
-    from time import sleep
-    from cache_decorator import cache
-
-
-    class A:
-        def __init__(self, value):
-            self.value = value
-    
-        @cache(cache_path="{cache_dir}/{file_name}_{function_name}/{value}_{_hash}.pkl")
-        def x(a):
-            sleep(3)
-            return a
-
 Depending on the extension of the file, different serialization and deserialization dispatcher will be called.
 
 .. code:: python
