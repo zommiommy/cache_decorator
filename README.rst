@@ -190,3 +190,46 @@ Or we could also add values from the self.
             sleep(3)
             return a
 
+Depending on the extension of the file, different serialization and deserialization dispatcher will be called.
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import cache
+
+    @cache(cache_path="{cache_dir}/{_hash}.pkl.gz")
+    def x(a):
+        sleep(3)
+        return a
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import cache
+
+    @cache(cache_path="{cache_dir}/{_hash}.json")
+    def x(a):
+        sleep(3)
+        return {"1":1,"2":2}
+
+.. code:: python
+
+    import numpy as np
+    from time import sleep
+    from cache_decorator import cache
+
+    @cache(cache_path="{cache_dir}/{_hash}.npy")
+    def x(a):
+        sleep(3)
+        return np.array([1, 2, 3])
+
+.. code:: python
+
+    import numpy as np
+    from time import sleep
+    from cache_decorator import cache
+
+    @cache(cache_path="{cache_dir}/{_hash}.npz")
+    def x(a):
+        sleep(3)
+        return np.array([1, 2, 3]), np.array([1, 2, 4])
