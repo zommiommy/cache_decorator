@@ -3,7 +3,7 @@ from time import sleep, perf_counter
 from cache_decorator import cache
 
 @cache(
-    cache_dir="./test_cache", 
+    cache_dir="./test_cache",
     args_to_ignore=["x"],
 )
 def cached_function(a, x):

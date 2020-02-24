@@ -8,7 +8,7 @@ from cache_decorator import cache
     cache_dir="./test_cache"
 )
 def cached_function(a):
-    sleep(2)    
+    sleep(2)
     return np.array([1, 2, 3])
 
 def test_pickle_npy():
