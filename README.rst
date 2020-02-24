@@ -3,7 +3,26 @@ cache_decorator
 |travis| |sonar_quality| |sonar_maintainability| |codacy|
 |code_climate_maintainability| |pip| |downloads|
 
-a simple decorator to cache the results of computationally heavy functions
+A simple decorator to cache the results of computationally heavy functions.
+The package automatically serialize and deserialize depending on the format of the save path.
+
+Currently it supports:
+
+- .json
+- .pkl
+- .pkl.gz
+- .pkl.bz
+- .pkl.lzma
+- .pkl.zip
+- .npy
+- .npz
+- .csv
+- .csv.gz
+- .csv.bz2
+- .csv.zip
+- .csv.xz
+- .xlsx
+
 
 How do I install this package?
 ----------------------------------------------
