@@ -25,5 +25,3 @@ def parse_time(value):
         return number * 60 * 60 * 24
     elif unit == "w":
         return number * 60 * 60 * 24 * 7
-    else:
-        raise ValueError("The time delta %s does not match the regex \d+[smhdw]"%value)
