@@ -202,3 +202,22 @@ Depending on the extension of the file, different serialization and deserializat
     def x(a):
         sleep(3)
         return np.array([1, 2, 3]), np.array([1, 2, 4])
+
+Cache also might have a validity duration. 
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import Cache
+
+    @Cache(
+        cache_path="/tmp/{_hash}.pkl.gz",
+        validity_duration="24d"
+        )
+    def x(a):
+        sleep(3)
+        return a
+
+In this example the cache will be valid for the next 24 days. and on the 25th day the cache will be rebuilt.
+The duration can be written as a time in seconds or as a string with unit.
+The units can be "s" seconds, "m" minutes, "h" hours, "d" days, "w" weeks.

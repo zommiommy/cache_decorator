@@ -1,0 +1,35 @@
+from time import sleep, perf_counter
+from shutil import rmtree
+from cache_decorator import Cache
+from .utils import standard_test_dataframes
+
+@Cache(
+    cache_path="{cache_dir}/{_hash}.pkl",
+    cache_dir="./test_cache",
+    validity_duration="3s"
+)
+def cached_function(a):
+    sleep(1)
+    return 0xdeadbabe
+
+def test_validity_duration():
+
+    start = perf_counter()
+    cached_function(1)
+    time_1 = perf_counter() - start
+
+    start = perf_counter()
+    cached_function(1)
+    time_2 = perf_counter() - start
+
+    sleep(3)
+
+    start = perf_counter()
+    cached_function(1)
+    time_3 = perf_counter() - start
+
+    assert time_2 <= time_1
+    assert time_2 <= time_3
+    assert abs(time_1 - time_3) < 0.5
+
+    rmtree("./test_cache")
