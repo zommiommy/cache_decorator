@@ -22,7 +22,6 @@ class Cache:
         cache_dir: str = "",
         validity_duration: str = "",
         verbose: bool = False,
-        logger: logging.Logger = None,
     ):
         self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
@@ -30,12 +29,13 @@ class Cache:
         self.load, self.dump = get_load_dump_from_path(cache_path)
         self.validity_duration = parse_time(validity_duration)
 
-        if logger:
-            self.logger = logger
+        self.logger = logging.getLogger(__name__)
+
+        if verbose:
+            self.logger.setLevel(logging.DEBUG)
         else:
-            self.logger = logging.getLogger(__name__)
-            if not verbose:
-                self.logger.setLevel(logging.CRITICAL)
+            self.logger.setLevel(logging.CRITICAL)
+
 
     def _compute_function_info(self, function: Callable):
         self.function_info = {
