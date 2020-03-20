@@ -2,10 +2,12 @@
 import os
 import json
 import inspect
+import logging
 from time import time
 from typing import Tuple, Callable
-from .backends import get_load_dump_from_path
 from .utils import get_params, parse_time
+from .backends import get_load_dump_from_path
+
 # Dictionary are not hashable and the python hash is not consistent
 # between runs so we have to use an external dictionary hashing package
 # else we will not be able to load the saved caches.
@@ -19,14 +21,21 @@ class Cache:
         args_to_ignore: Tuple[str] = (),
         cache_dir: str = "",
         validity_duration: str = "",
-        verbose: bool = False
+        verbose: bool = False,
+        logger: logging.Logger = None,
     ):
         self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
         self.cache_dir = cache_dir
         self.load, self.dump = get_load_dump_from_path(cache_path)
-        self._verbose = verbose
         self.validity_duration = parse_time(validity_duration)
+
+        if logger:
+            self.logger = logger
+        else:
+            self.logger = logging.getLogger(__name__)
+            if not verbose:
+                self.logger.disable(logging.CRITICAL)
 
     def _compute_function_info(self, function: Callable):
         self.function_info = {
@@ -55,12 +64,12 @@ class Cache:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             # If the file exist, load it
             if os.path.exists(path) and self._is_valid(path):
-                if self._verbose:
-                    print("Loading cache at {}".format(path))
+                self.logger.debug("Loading cache from {}".format(path))
                 return self.load(path)
             # else call the function
             result = function(*args, **kwargs)
             # and save the result
+            self.logger.debug("Saving the computed result at %s", path)
             self.dump(result, path)
             # If the cache is supposed to have a
             # validity duration then save the creation timestamp
@@ -72,6 +81,7 @@ class Cache:
 
     def _save_creation_time(self, path):
         cache_date = path + "_time.json"
+        self.logger.debug("Saving the cache time meta-data at %s", cache_date)
         with open(cache_date, "w") as f:
             json.dump({"creation_time":time()}, f)
 
@@ -89,9 +99,7 @@ class Cache:
             # this might means that the file was deleted
             # or the cache was previously used without
             # validity time
-            if self._verbose:
-                print("Warning no creation time at {}".format(date_path))
-                print("Therefore the cache will be considered not valid")
+            self.logger.warn("Warning no creation time at %s. Therefore the cache will be considered not valid", date_path)
             return False
         # Open the file e confront the time
         with open(date_path, "r") as f:
