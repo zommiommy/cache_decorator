@@ -35,7 +35,7 @@ class Cache:
         else:
             self.logger = logging.getLogger(__name__)
             if not verbose:
-                self.logger.disable(logging.CRITICAL)
+                self.logger.setLevel(logging.CRITICAL)
 
     def _compute_function_info(self, function: Callable):
         self.function_info = {
