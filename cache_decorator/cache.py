@@ -43,9 +43,9 @@ class Cache:
             # Name of the function
             "function_name": function.__name__,
             # Arguments names
-            "args": function_args_specs.args,
-            "defaults": function_args_specs.defaults,
-            "kwonlydefaults": function_args_specs.kwonlydefaults,
+            "args": function_args_specs.args or [],
+            "defaults": function_args_specs.defaults or [],
+            "kwonlydefaults": function_args_specs.kwonlydefaults or {},
             "args_to_ignore": self.args_to_ignore,
             "cache_path": self.cache_path,
         }
