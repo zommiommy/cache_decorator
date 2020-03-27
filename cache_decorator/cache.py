@@ -19,8 +19,8 @@ class Cache:
         self,
         cache_path: str = "{cache_dir}/{function_name}/{_hash}.pkl",
         args_to_ignore: Tuple[str] = (),
-        cache_dir: str = "",
-        validity_duration: str = "",
+        cache_dir: str = None,
+        validity_duration: int = -1,
         verbose: bool = False,
     ):
         self.verbose = verbose
@@ -99,10 +99,13 @@ class Cache:
 
     def _get_formatted_path(self, args, kwargs) -> str:
         params = get_params(self.function_info, args, kwargs)
-        _hash = sha256({"params": params, "function_info": self.function_info})
+
+        if "_hash" in self.cache_path: 
+            params["_hash"] = sha256({"params": params, "function_info": self.function_info})
+            
+
         # Compute the path of the cache for these parameters
         return self.function_info["cache_path"].format(
-            _hash=_hash,
             **params,
             **self.function_info
         )

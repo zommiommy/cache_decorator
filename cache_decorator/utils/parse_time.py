@@ -3,7 +3,10 @@ import re
 
 def parse_time(value):
     if type(value) in [int, float]:
-        return value
+        if value >= 0:
+            return value
+        else:
+            return None
 
     value = value.strip()
     if value == "":
