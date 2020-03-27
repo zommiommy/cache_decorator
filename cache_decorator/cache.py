@@ -106,14 +106,11 @@ class Cache:
             params["_hash"] = sha256({"params": params, "function_info": self.function_info})
         self.logger.debug("Got parameters %s", params)    
 
-        print(params)
-        print(self.function_info["cache_path"])
         # Compute the path of the cache for these parameters
         path = self.function_info["cache_path"].format(
             **params,
             **self.function_info
         )
-        print(path)
         self.logger.debug("Calculated path %s", path)
         return path
 
