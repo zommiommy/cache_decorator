@@ -23,19 +23,12 @@ class Cache:
         validity_duration: str = "",
         verbose: bool = False,
     ):
+        self.verbose = verbose
         self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
         self.cache_dir = cache_dir
         self.load, self.dump = get_load_dump_from_path(cache_path)
         self.validity_duration = parse_time(validity_duration)
-
-        self.logger = logging.getLogger(__name__)
-
-        if verbose:
-            self.logger.setLevel(logging.DEBUG)
-        else:
-            self.logger.setLevel(logging.CRITICAL)
-
 
     def _compute_function_info(self, function: Callable):
         self.function_info = {
@@ -128,4 +121,11 @@ class Cache:
         return wrapped
 
     def __call__(self, function: Callable) -> Callable:
+        self.logger = logging.getLogger(__name__ + "." + function.__name__)
+
+        if self.verbose:
+            self.logger.setLevel(logging.DEBUG)
+        else:
+            self.logger.setLevel(logging.CRITICAL)
+
         return self.decorate(function)
