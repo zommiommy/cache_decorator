@@ -31,6 +31,7 @@ class Cache:
         self.validity_duration = parse_time(validity_duration)
 
     def _compute_function_info(self, function: Callable):
+        function_args_specs = inspect.getfullargspec(function)
         self.function_info = {
             # The default cache_dir is ./cache but it can be setted with
             # the eviornment variable CACHE_DIR
@@ -42,13 +43,16 @@ class Cache:
             # Name of the function
             "function_name": function.__name__,
             # Arguments names
-            "args_name": inspect.getfullargspec(function)[0],
+            "args": function_args_specs.args,
+            "defaults": function_args_specs.defaults,
+            "kwonlydefaults": function_args_specs.kwonlydefaults,
             "args_to_ignore": self.args_to_ignore,
             "cache_path": self.cache_path,
         }
 
     def _decorate_callable(self, function: Callable) -> Callable:
         def wrapped(*args, **kwargs):
+            print(args, kwargs)
             # Get the path
             path = self._get_formatted_path(args, kwargs)
             # ensure that the cache folder exist
@@ -99,16 +103,20 @@ class Cache:
 
     def _get_formatted_path(self, args, kwargs) -> str:
         params = get_params(self.function_info, args, kwargs)
-
         if "_hash" in self.cache_path: 
             params["_hash"] = sha256({"params": params, "function_info": self.function_info})
-            
+        self.logger.debug("Got parameters %s", params)    
 
+        print(params)
+        print(self.function_info["cache_path"])
         # Compute the path of the cache for these parameters
-        return self.function_info["cache_path"].format(
+        path = self.function_info["cache_path"].format(
             **params,
             **self.function_info
         )
+        print(path)
+        self.logger.debug("Calculated path %s", path)
+        return path
 
     def _fix_docs(self, function: Callable, wrapped: Callable) -> Callable:
         # Copy the doc of decoreated function
