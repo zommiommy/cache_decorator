@@ -1,2 +1,2 @@
 """Current version of package cache_decorator."""
-__version__ = "1.1.7"
+__version__ = "1.1.8"

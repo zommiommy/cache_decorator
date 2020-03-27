@@ -52,7 +52,6 @@ class Cache:
 
     def _decorate_callable(self, function: Callable) -> Callable:
         def wrapped(*args, **kwargs):
-            print(args, kwargs)
             # Get the path
             path = self._get_formatted_path(args, kwargs)
             # ensure that the cache folder exist
