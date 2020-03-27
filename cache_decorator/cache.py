@@ -46,8 +46,6 @@ class Cache:
             # This will be used in the hash so that old
             # Caches will not be loaded
             "source": inspect.getsourcelines(function),
-            # Get the name of the file where the funciton is defined, without the extension
-            "file_name": os.path.splitext(os.path.basename(inspect.getsourcefile(function)))[0],
             # Name of the function
             "function_name": function.__name__,
             # Arguments names
