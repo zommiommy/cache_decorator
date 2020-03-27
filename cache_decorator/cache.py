@@ -17,7 +17,7 @@ from dict_hash import sha256
 class Cache:
     def __init__(
         self,
-        cache_path: str = "{cache_dir}/{file_name}_{function_name}/{_hash}.pkl",
+        cache_path: str = "{cache_dir}/{function_name}/{_hash}.pkl",
         args_to_ignore: Tuple[str] = (),
         cache_dir: str = "",
         validity_duration: str = "",
