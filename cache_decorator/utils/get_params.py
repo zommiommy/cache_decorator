@@ -4,8 +4,9 @@ def get_params(function_info, args, kwargs):
     params = {}
 
     # add args default
-    for arg, default in zip(reversed(function_info["args"]), reversed(function_info["defaults"])):
-        params[arg] = default
+    if function_info["defaults"]:
+        for arg, default in zip(reversed(function_info["args"]), reversed(function_info["defaults"])):
+            params[arg] = default
 
     # Add kwonly defaults
     params.update(function_info["kwonlydefaults"])
