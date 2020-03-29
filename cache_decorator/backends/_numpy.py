@@ -10,6 +10,10 @@ def save_npz(objs, path):
     with open(path, "wb") as f:
         np.savez(f, *objs)
 
+def save_compressed_npz(objs, path):
+    with open(path, "wb") as f:
+        np.savez_compressed(f, *objs)
+
 def load_npy(path):
     with open(path, "rb") as f:
         return np.load(f)
@@ -26,6 +30,6 @@ numpy_dict = {
     },
     "npz":{
         "load":load_npz,
-        "dump":save_npz
+        "dump":save_compressed_npz
     }
 }
