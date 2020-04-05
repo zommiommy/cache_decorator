@@ -15,7 +15,7 @@ from .backends import get_load_dump_from_path
 from dict_hash import sha256
 
 def cache(function):
-    return Cache()
+    return Cache()(function)
 
 class Cache:
     def __init__(
