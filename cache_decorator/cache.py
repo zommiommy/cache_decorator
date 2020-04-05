@@ -133,7 +133,7 @@ class Cache:
         wrapped = self._fix_docs(function, wrapped)
         return wrapped
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, function):
         self.logger = logging.getLogger(__name__ + "." + function.__name__)
 
         if self.verbose:
