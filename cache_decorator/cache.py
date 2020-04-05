@@ -4,6 +4,7 @@ import json
 import inspect
 import logging
 from time import time
+from functools import wraps
 from typing import Tuple, Callable
 from .utils import get_params, parse_time
 from .backends import get_load_dump_from_path
@@ -13,6 +14,8 @@ from .backends import get_load_dump_from_path
 # else we will not be able to load the saved caches.
 from dict_hash import sha256
 
+def cache(function):
+    return Cache()
 
 class Cache:
     def __init__(
@@ -51,6 +54,8 @@ class Cache:
         }
 
     def _decorate_callable(self, function: Callable) -> Callable:
+        # wraps to support pickling
+        @wraps(function)
         def wrapped(*args, **kwargs):
             # Get the path
             path = self._get_formatted_path(args, kwargs)
@@ -72,15 +77,14 @@ class Cache:
             return result
         return wrapped
 
-
     def _save_creation_time(self, path):
         cache_date = path + "_time.json"
         self.logger.debug("Saving the cache time meta-data at %s", cache_date)
         with open(cache_date, "w") as f:
-            json.dump({"creation_time":time()}, f)
+            json.dump({"creation_time": time()}, f)
 
     def _is_valid(self, path):
-        # If validation to "" or 0 
+        # If validation to "" or 0
         # then it's disabled and the cache is always valid
         if not self.validity_duration:
             return True
@@ -93,7 +97,8 @@ class Cache:
             # this might means that the file was deleted
             # or the cache was previously used without
             # validity time
-            self.logger.warn("Warning no creation time at %s. Therefore the cache will be considered not valid", date_path)
+            self.logger.warn(
+                "Warning no creation time at %s. Therefore the cache will be considered not valid", date_path)
             return False
         # Open the file e confront the time
         with open(date_path, "r") as f:
@@ -102,9 +107,10 @@ class Cache:
 
     def _get_formatted_path(self, args, kwargs) -> str:
         params = get_params(self.function_info, args, kwargs)
-        if "_hash" in self.cache_path: 
-            params["_hash"] = sha256({"params": params, "function_info": self.function_info})
-        self.logger.debug("Got parameters %s", params)    
+        if "_hash" in self.cache_path:
+            params["_hash"] = sha256(
+                {"params": params, "function_info": self.function_info})
+        self.logger.debug("Got parameters %s", params)
 
         # Compute the path of the cache for these parameters
         path = self.function_info["cache_path"].format(
@@ -127,7 +133,7 @@ class Cache:
         wrapped = self._fix_docs(function, wrapped)
         return wrapped
 
-    def __call__(self, function: Callable) -> Callable:
+    def __call__(self, *args, **kwargs):
         self.logger = logging.getLogger(__name__ + "." + function.__name__)
 
         if self.verbose:
