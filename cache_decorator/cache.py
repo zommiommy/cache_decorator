@@ -27,7 +27,7 @@ class Cache:
         args_to_ignore: Tuple[str] = (),
         cache_dir: str = None,
         validity_duration: Union[int, str] = -1,
-        use_source_code: bool = False,
+        use_source_code: bool = True,
         verbose: bool = False,
     ):
         """
@@ -93,7 +93,7 @@ class Cache:
             If `validity_duration` is specified and a cache does not have it's json file, it's considered invalid.
             The given time must be an integer in seconds or a string in the format (\d+[smhdw]) to specify 
             a given ammount of s(econds), m(inutes), h(ours), d(ays), w(eeks). 
-        use_source_code: bool = False,
+        use_source_code: bool = True,
             If in the computing of the hash the must also use the sourcecode of the cached function.
         verbose: bool = False,
             Set the logger level to DEBUG. Alternatively the logger is getted with
@@ -139,7 +139,8 @@ class Cache:
             # This will be used in the hash so that old
             # Caches will not be loaded
             self.function_info["source"] = "".join(
-                inspect.getsourcelines(function))
+                inspect.getsourcelines(function)[0]
+            )
 
     def _decorate_callable(self, function: Callable) -> Callable:
         # wraps to support pickling
