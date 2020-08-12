@@ -14,9 +14,11 @@ from .backends import get_load_dump_from_path
 # else we will not be able to load the saved caches.
 from dict_hash import sha256
 
+
 def cache(function):
     """Cache with default parameters"""
     return Cache()(function)
+
 
 class Cache:
     def __init__(
@@ -28,7 +30,8 @@ class Cache:
         use_source_code: bool = False,
         verbose: bool = False,
     ):
-        """Cache the results of a function (or method).
+        """
+        Cache the results of a function (or method).
 
         Example:
         ```
@@ -135,7 +138,8 @@ class Cache:
             # Get the sourcode of the funciton
             # This will be used in the hash so that old
             # Caches will not be loaded
-            self.function_info["source"] = "".join(inspect.getsourcelines(function))
+            self.function_info["source"] = "".join(
+                inspect.getsourcelines(function))
 
     def _decorate_callable(self, function: Callable) -> Callable:
         # wraps to support pickling

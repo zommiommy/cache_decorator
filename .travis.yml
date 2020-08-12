@@ -11,7 +11,7 @@ language: python
 python:
 - '3.6'
 before_install:
-- pip install --upgrade pytest
+- pip install --upgrade pytest numpy pandas
 install:
 - pip install ".[test]"
 before_script:
