@@ -5,7 +5,7 @@ import inspect
 import logging
 from time import time
 from functools import wraps
-from typing import Tuple, Callable
+from typing import Tuple, Callable, Union
 from .utils import get_params, parse_time
 from .backends import get_load_dump_from_path
 
@@ -15,6 +15,7 @@ from .backends import get_load_dump_from_path
 from dict_hash import sha256
 
 def cache(function):
+    """Cache with default parameters"""
     return Cache()(function)
 
 class Cache:
@@ -23,15 +24,96 @@ class Cache:
         cache_path: str = "{cache_dir}/{function_name}/{_hash}.pkl",
         args_to_ignore: Tuple[str] = (),
         cache_dir: str = None,
-        validity_duration: int = -1,
+        validity_duration: Union[int, str] = -1,
+        use_source_code: bool = False,
         verbose: bool = False,
     ):
+        """Cache the results of a function (or method).
+
+        Example:
+        ```
+        from cache_decorator import Cache
+        @Cache()
+        def test(x):
+            return 2 * x
+        ```
+
+        Arguments
+        ---------
+        cache_path: str = "{cache_dir}/{function_name}/{_hash}.pkl",
+            Where to save the caches.
+            It's a string format and the available variables are
+            `cache_dir` the directory specified in the other argument.
+            `function_name` the name of the cached function.
+            `args_to_ignore` which arguments can be ignored form the input.
+            `args` the name of the arguments (both positional and keyword).
+            `defaults` the default values of the positional arguments.
+            `kwonlydefaults` the default values of the kwarguments.
+            `source` if `use_source_code` is setted to true, it's the string 
+                with the source code of the function to cache.
+            `_hash` it's the hash of the parameters (excluded the ignored ones),
+                this is computed only if it's present in `cache_path` so
+                it's possible to cache functions which take non-hashable arguments.
+            Moreover, you can use any argument passed to the function.
+            Example:
+            ```
+            from cache_decorator import Cache
+            @Cache("{cache_dir}/{x}/{y}.pkl)
+            def test(x, y):
+                return x * y
+            ```
+            The extension used in the format string determines the serialization method.
+            The available ones are `.json .json.gz .json.bz .json.lzma .pkl .pkl.gz .pkl.bz 
+            .pkl.lzma .pkl.zip .npy .npz .csv .csv.gz .csv.bz2 .csv.zip .csv.xz .xlsx`
+            This can also be used to make multiple arguments use the same cache:
+            Example:
+            ```
+            from cache_decorator import Cache
+            @Cache("{cache_dir}/{x}.pkl)
+            def test(x, y):
+                return x * y
+            ```
+            In this case the cache will be used watching only the `x` variable and
+            the `y` is ignored. so `test(1, 2)` and `test(1, 10000)` will use the same
+            cache (even if that's not right!). This can be used to save human readable 
+            partial results, in any other cases you should use the `_hash`.
+        args_to_ignore: Tuple[str] = (),
+            Which arguments to ignore when computing the hash.
+        cache_dir: str = None,
+            The folder where to save the caches. If not specified it read the value of
+            the enviornment variable `CACHE_DIR`. If even this is empty it defaults to
+            "./cache". This value is substituted in the `cache_path` argument if present.
+        validity_duration: Union[int, str] = None,
+            If not None, the cache will be recomputed after the specified ammount of time.
+            This is done by saving a json with the same name of the cache plus `_time.json` which contains the 
+            computation epoch.
+            If `validity_duration` is specified and a cache does not have it's json file, it's considered invalid.
+            The given time must be an integer in seconds or a string in the format (\d+[smhdw]) to specify 
+            a given ammount of s(econds), m(inutes), h(ours), d(ays), w(eeks). 
+        use_source_code: bool = False,
+            If in the computing of the hash the must also use the sourcecode of the cached function.
+        verbose: bool = False,
+            Set the logger level to DEBUG. Alternatively the logger is getted with
+            `logging.getLogger(__name__ + "." + function.__name__)`
+            so it possible to set the level and add filehandlers.
+            Example:
+            ```
+            import logging
+            from cache_decorator import Cache
+            @Cache()
+            def test(x):
+                return 2 * x
+            logger = logging.getLogger("cache.test")
+            logger.setLevel(logging.DEBUG)
+            ```
+        """
         self.verbose = verbose
         self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
         self.cache_dir = cache_dir
         self.load, self.dump = get_load_dump_from_path(cache_path)
         self.validity_duration = parse_time(validity_duration)
+        self.use_source_code = use_source_code
 
     def _compute_function_info(self, function: Callable):
         function_args_specs = inspect.getfullargspec(function)
@@ -39,10 +121,6 @@ class Cache:
             # The default cache_dir is ./cache but it can be setted with
             # the eviornment variable CACHE_DIR
             "cache_dir": self.cache_dir or os.environ.get("CACHE_DIR", "./cache"),
-            # Get the sourcode of the funciton
-            # This will be used in the hash so that old
-            # Caches will not be loaded
-            "source": inspect.getsourcelines(function),
             # Name of the function
             "function_name": function.__name__,
             # Arguments names
@@ -52,6 +130,12 @@ class Cache:
             "args_to_ignore": self.args_to_ignore,
             "cache_path": self.cache_path,
         }
+
+        if self.use_source_code:
+            # Get the sourcode of the funciton
+            # This will be used in the hash so that old
+            # Caches will not be loaded
+            self.function_info["source"] = "".join(inspect.getsourcelines(function))
 
     def _decorate_callable(self, function: Callable) -> Callable:
         # wraps to support pickling
@@ -97,7 +181,7 @@ class Cache:
             # this might means that the file was deleted
             # or the cache was previously used without
             # validity time
-            self.logger.warn(
+            self.logger.warning(
                 "Warning no creation time at %s. Therefore the cache will be considered not valid", date_path)
             return False
         # Open the file e confront the time
