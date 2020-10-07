@@ -1,5 +1,6 @@
 
 import os
+import sys
 import json
 import inspect
 import logging
@@ -14,6 +15,15 @@ from .backends import get_load_dump_from_path
 # else we will not be able to load the saved caches.
 from dict_hash import sha256
 
+log_levels = {
+    "debug":logging.DEBUG,
+    "info":logging.DEBUG,
+    "warn":logging.DEBUG,
+    "warning":logging.DEBUG,
+    "error":logging.DEBUG,
+    "critical":logging.DEBUG,
+    "crit":logging.DEBUG,
+}
 
 def cache(function):
     """Cache with default parameters"""
@@ -28,7 +38,8 @@ class Cache:
         cache_dir: str = None,
         validity_duration: Union[int, str] = -1,
         use_source_code: bool = True,
-        verbose: bool = False,
+        log_level: str = "critical",
+        log_format: str = '%(asctime)-15s[%(levelname)s]: %(message)s'
     ):
         """
         Cache the results of a function (or method).
@@ -95,10 +106,12 @@ class Cache:
             a given ammount of s(econds), m(inutes), h(ours), d(ays), w(eeks). 
         use_source_code: bool = True,
             If in the computing of the hash the must also use the sourcecode of the cached function.
-        verbose: bool = False,
-            Set the logger level to DEBUG. Alternatively the logger is getted with
-            `logging.getLogger(__name__ + "." + function.__name__)`
-            so it possible to set the level and add filehandlers.
+        log_level: str = "critical",
+            Set the logger level to the wanted level. The usable levels are:
+            ["debug", "info", "warning", "error", "critical"]
+            Alternatively a reference to the logger can be obtained with
+            `logging.getLogger("cache." + function.__name__)`
+            so it possible to fully customize it, like set the level and add filehandlers.
             Example:
             ```
             import logging
@@ -108,9 +121,14 @@ class Cache:
                 return 2 * x
             logger = logging.getLogger("cache.test")
             logger.setLevel(logging.DEBUG)
+        log_format: str = '%(asctime)-15s[%(levelname)s]: %(message)s'
+            Formatting of the default logger on stderr. Informations on how the formatting works can be found at
+            https://docs.python.org/3/library/logging.html . Moreover, as explained in the log_level, you can get
+            a referfence to the logger and fully customize it.
             ```
         """
-        self.verbose = verbose
+        self.log_level = log_level
+        self.log_format = log_format
         self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
         self.cache_dir = cache_dir
@@ -152,12 +170,12 @@ class Cache:
             os.makedirs(os.path.dirname(path), exist_ok=True)
             # If the file exist, load it
             if os.path.exists(path) and self._is_valid(path):
-                self.logger.debug("Loading cache from {}".format(path))
+                self.logger.info("Loading cache from {}".format(path))
                 return self.load(path)
             # else call the function
             result = function(*args, **kwargs)
             # and save the result
-            self.logger.debug("Saving the computed result at %s", path)
+            self.logger.info("Saving the computed result at %s", path)
             self.dump(result, path)
             # If the cache is supposed to have a
             # validity duration then save the creation timestamp
@@ -168,7 +186,7 @@ class Cache:
 
     def _save_creation_time(self, path):
         cache_date = path + "_time.json"
-        self.logger.debug("Saving the cache time meta-data at %s", cache_date)
+        self.logger.info("Saving the cache time meta-data at %s", cache_date)
         with open(cache_date, "w") as f:
             json.dump({"creation_time": time()}, f)
 
@@ -224,10 +242,15 @@ class Cache:
 
     def __call__(self, function):
         self.logger = logging.getLogger(__name__ + "." + function.__name__)
+        handler = logging.StreamHandler(sys.stderr)
+        handler.setFormatter(logging.Formatter(self.log_format))
+        self.logger.addHandler(handler)
 
-        if self.verbose:
-            self.logger.setLevel(logging.DEBUG)
-        else:
-            self.logger.setLevel(logging.CRITICAL)
+        if self.log_level.lower() not in log_levels:
+            raise ValueError("The logger level {} is not a supported one. The available ones are {}".format(
+                self.log_level.lower(),
+                list(log_levels.keys())
+            ))
+        self.logger.setLevel(log_levels[self.log_level.lower()])
 
         return self.decorate(function)

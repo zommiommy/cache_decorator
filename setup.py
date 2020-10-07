@@ -45,6 +45,13 @@ extras = {
     "excel":["openpyxl", "xlrd"],
 }
 
+extras["all"] = [
+    x
+    for k, v in extras.items()
+    for x in v
+    if k != "test"
+]
+
 setup(
     name='cache_decorator',
     version=__version__,

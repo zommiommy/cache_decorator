@@ -30,9 +30,16 @@ To install **all** the extensions use:
 
 .. code:: shell
 
-    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel]"
+    pip install "cache_decorator[all]"
 
 (the double quotes are optional in ``bash`` but required with ``zsh``)
+
+Optionally you can specify the single features you want:
+
+.. code:: shell
+
+    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel]"
+
 If the installation fails you can try to add ``--user`` at the end of the command as:
 
 .. code:: shell
@@ -108,37 +115,8 @@ To cache a function or a method you just have to decorate it with the cache deco
             sleep(3)
             return a + b
 
-
-By default the cache is differentiate by the parameters passed to the function.
-One can specify which parameters should be ignored.
-
-
-.. code:: python
-
-    from time import sleep
-    from cache_decorator import Cache
-
-    @Cache(args_to_ignore=["verbose"])
-    def x(a, verbose=False):
-        sleep(3)
-        if verbose:
-            print("HEY")
-        return a
-
-Multiple arguments can be specified as a list of strings with the name of the arguments to ignore.
-
-.. code:: python
-
-    from time import sleep
-    from cache_decorator import Cache
-
-    @Cache(args_to_ignore=["verbose", "multiprocessing"])
-    def x(a, verbose=False, multiprocessing=False):
-        sleep(3)
-        if verbose:
-            print("HEY")
-        return a
-
+Cache path
+----------
 The default cache directory is ./cache but this can be setted by passing the cache_dir parameter to the decorator or by setting the environment variable CACHE_DIR.
 In the case both are setted, the parameter folder has precedence over the environment one.
 
@@ -207,6 +185,40 @@ Depending on the extension of the file, different serialization and deserializat
         sleep(3)
         return np.array([1, 2, 3]), np.array([1, 2, 4])
 
+Ignoring arguments when computing the hash
+------------------------------------------
+By default the cache is differentiate by the parameters passed to the function.
+One can specify which parameters should be ignored.
+
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import Cache
+
+    @Cache(args_to_ignore=["verbose"])
+    def x(a, verbose=False):
+        sleep(3)
+        if verbose:
+            print("HEY")
+        return a
+
+Multiple arguments can be specified as a list of strings with the name of the arguments to ignore.
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import Cache
+
+    @Cache(args_to_ignore=["verbose", "multiprocessing"])
+    def x(a, verbose=False, multiprocessing=False):
+        sleep(3)
+        if verbose:
+            print("HEY")
+        return a
+
+Cache validity
+------------------------------------------
 Cache also might have a validity duration. 
 
 .. code:: python
@@ -225,3 +237,58 @@ Cache also might have a validity duration.
 In this example the cache will be valid for the next 24 days. and on the 25th day the cache will be rebuilt.
 The duration can be written as a time in seconds or as a string with unit.
 The units can be "s" seconds, "m" minutes, "h" hours, "d" days, "w" weeks.
+
+Logging
+-------
+Each time a new function is decorated with this decorator, a new logger is created.
+You can modify the default logger with ``log_level`` and ``log_format``.
+
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import Cache
+
+    @Cache(log_level="debug")
+    def x(a):
+        sleep(3)
+        return a
+
+If the default format is not like you like it you can change it with:
+
+.. code:: python
+
+    from time import sleep
+    from cache_decorator import Cache
+
+    @Cache(log_format="%(asctime)-15s[%(levelname)s]: %(message)s")
+    def x(a):
+        sleep(3)
+        return a
+
+More informations about the formatting can be found here https://docs.python.org/3/library/logging.html .
+
+Moreover, the name of the default logger is:
+
+.. code:: python
+
+    logging.getLogger("cache." + function.__name__)
+
+So we can get the reference to the logger and fully customize it:
+
+.. code:: python
+
+    import logging
+    from cache_decorator import Cache
+
+    @Cache()
+    def test_function(x):
+        return 2 * x
+
+    # Get the logger
+    logger = logging.getLogger("cache.f")
+    logger.setLevel(logging.DEBUG)
+    
+    # Make it log to a file
+    handler = logging.FileHandler("cache.log")
+    logger.addHandler(handler)
