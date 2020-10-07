@@ -5,7 +5,7 @@ from .utils import standard_test_array
 
 @Cache(
     cache_dir="./test_cache",
-    verbose=True
+    log_level="debug",
 )
 def cached_function(a):
     sleep(2)
