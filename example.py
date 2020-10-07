@@ -2,12 +2,12 @@ import logging
 from time import sleep
 from cache_decorator import Cache
 
-@Cache(verbose=False)
+@Cache(log_level="cirtical")
 def cached_function_1(a):
     sleep(2)
     return [1, 2, 3]
 
-@Cache(verbose=True)
+@Cache(log_level="debug")
 def cached_function_2(a):
     sleep(2)
     return [1, 2, 3]
