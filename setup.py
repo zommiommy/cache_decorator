@@ -38,6 +38,11 @@ test_deps =[
 
 extras = {
     'test': test_deps,
+    "compress_pickle":["compress_pickle"],
+    "compress_json":["compress_json"],
+    "numpy":["numpy"],
+    "pandas":["pandas"],
+    "excel":["openpyxl", "xlrd"],
 }
 
 setup(
@@ -60,13 +65,7 @@ setup(
     tests_require=test_deps,
     # Add here the package dependencies
     install_requires=[
-        "numpy",
-        "pandas",
-        "compress_pickle",
         "dict_hash",
-        "openpyxl",
-        "xlrd",
-        "compress_json",
     ],
     extras_require=extras,
 )

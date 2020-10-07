@@ -6,26 +6,17 @@ cache_decorator
 A simple decorator to cache the results of computationally heavy functions.
 The package automatically serialize and deserialize depending on the format of the save path.
 
-Currently it supports:
+By default it supports only ``.json`` and ``.pkl`` but other extensions can be enabled by using the extra feature:
 
-- .json
-- .json.gz
-- .json.bz
-- .json.lzma
-- .pkl
-- .pkl.gz
-- .pkl.bz
-- .pkl.lzma
-- .pkl.zip
-- .npy
-- .npz
-- .csv
-- .csv.gz
-- .csv.bz2
-- .csv.zip
-- .csv.xz
-- .xlsx
+[compress_json] ``.json.gz .json.bz .json.lzma``
 
+[compress_pickle] ``.pkl.gz .pkl.bz .pkl.lzma .pkl.zip``
+
+[numpy] ``.npy .npz``
+
+[pandas] ``.csv .csv.gz .csv.bz2 .csv.zip .csv.xz``
+
+[excel] ``.xlsx``
 
 How do I install this package?
 ----------------------------------------------
@@ -34,6 +25,19 @@ As usual, just download it using pip:
 .. code:: shell
 
     pip install cache_decorator
+
+To install **all** the extensions use:
+
+.. code:: shell
+
+    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel]"
+
+(the double quotes are optional in ``bash`` but required with ``zsh``)
+If the installation fails you can try to add ``--user`` at the end of the command as:
+
+.. code:: shell
+
+    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel]" --user
 
 
 Tests Coverage
