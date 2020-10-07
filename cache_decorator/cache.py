@@ -17,12 +17,12 @@ from dict_hash import sha256
 
 log_levels = {
     "debug":logging.DEBUG,
-    "info":logging.DEBUG,
-    "warn":logging.DEBUG,
-    "warning":logging.DEBUG,
-    "error":logging.DEBUG,
-    "critical":logging.DEBUG,
-    "crit":logging.DEBUG,
+    "info":logging.INFO,
+    "warn":logging.WARN,
+    "warning":logging.WARNING,
+    "error":logging.ERROR,
+    "critical":logging.CRITICAL,
+    "crit":logging.CRITICAL,
 }
 
 def cache(function):
