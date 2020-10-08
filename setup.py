@@ -39,13 +39,14 @@ test_deps =[
 extras = {
     'test': test_deps,
     "compress_pickle":["compress_pickle"],
-    "compress_json":["compress_json"],
-    "numpy":["numpy"],
-    "pandas":["pandas"],
+    "compress_json":["compress_json", "dict_hash[compress_json]"],
+    "numpy":["numpy", "dict_hash[numpy]"],
+    "pandas":["pandas", "dict_hash[pandas]"],
     "excel":["openpyxl", "xlrd"],
+    "numba":["dict_hash[numba]"],
 }
 
-extras["all"] = [
+extras["all"] = ["dict_hash[all]"] + [
     x
     for k, v in extras.items()
     for x in v
