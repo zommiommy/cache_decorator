@@ -18,6 +18,8 @@ By default it supports only ``.json`` and ``.pkl`` but other extensions can be e
 
 [excel] ``.xlsx``
 
+The extra feature ``[numba]`` enables the caching of numba objects.
+
 How do I install this package?
 ----------------------------------------------
 As usual, just download it using pip:
@@ -32,19 +34,19 @@ To install **all** the extensions use:
 
     pip install "cache_decorator[all]"
 
-(the double quotes are optional in ``bash`` but required with ``zsh``)
+(the double quotes are optional in ``bash`` but required by ``zsh``)
 
 Optionally you can specify the single features you want:
 
 .. code:: shell
 
-    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel]"
+    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel, numba]"
 
 If the installation fails you can try to add ``--user`` at the end of the command as:
 
 .. code:: shell
 
-    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel]" --user
+    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel, numba]" --user
 
 
 Tests Coverage
