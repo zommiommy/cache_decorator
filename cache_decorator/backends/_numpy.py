@@ -1,6 +1,8 @@
 try:
     import numpy as np
-
+except ModuleNotFoundError:
+    numpy_dict = {}
+else:
     def load_npz(path):
         with open(path, "rb") as f:
             objs = np.load(f)
@@ -22,7 +24,6 @@ try:
         with open(path, "wb") as f:
             np.save(f, obj)
 
-
     numpy_dict = {
         "npy":{
             "load":load_npy,
@@ -33,5 +34,3 @@ try:
             "dump":save_compressed_npz
         }
     }
-except ModuleNotFoundError:
-    numpy_dict = {}
