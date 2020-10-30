@@ -6,7 +6,7 @@ except ModuleNotFoundError:
 else:
     pandas_dict = {
             ".csv"+compression:{
-                    "load":pd.read_csv,
+                    "load":lambda path: pd.read_csv(path, index_col=0),
                     "dump":lambda obj, path: obj.to_csv(path)
                 }
             for compression in ["", ".gz", ".bz2", ".zip", ".xz"]
