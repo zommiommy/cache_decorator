@@ -132,13 +132,60 @@ class Cache:
         self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
         self.cache_dir = cache_dir
-        self.load, self.dump = get_load_dump_from_path(cache_path)
+        self._load, self._dump = get_load_dump_from_path(cache_path)
         self.validity_duration = parse_time(validity_duration)
         self.use_source_code = use_source_code
 
+
+    def store(obj, path: str) -> None:
+        """Store an object at a path, this automatically choose the correct backend.
+        
+        Arguments
+        ---------
+            obj: Object,
+                The object to store
+            path: str,
+                Where to store the file, based on its extension it will choose the correct backend.
+        """
+        load, dump = get_load_dump_from_path(path)
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        dump(obj, path)
+
+    def load(path: str):
+        """
+        Load an object from a file, this automatically choose the correct backend.
+        
+        Arguments
+        ---------
+            path: str,
+                The path to the file to load file, based on its extension it will choose the correct backend.
+
+        Returns
+        -------
+        The loaded object.
+        """
+        load, dump = get_load_dump_from_path(path)
+        return load(path)
+
+    def compute_path(function: Callable, *args, **kwargs) -> str:
+        """Return the path that a file would have if the given function
+            woule be called with the given arguments.
+
+        """
+        # If we are dealing with a cached function then unpack it:
+        if "__cached_function" not in dir(function):
+            raise ValueError("You cannot compuite the path of a function which is not decorated with the Cache decorator.")
+
+        instance = getattr(function, "__cacher_instance")
+        function = getattr(function, "__cached_function")
+
+        return instance._get_formatted_path(args, kwargs, instance._compute_function_info(function))
+
+
     def _compute_function_info(self, function: Callable):
         function_args_specs = inspect.getfullargspec(function)
-        self.function_info = {
+
+        function_info = {
             # The default cache_dir is ./cache but it can be setted with
             # the eviornment variable CACHE_DIR
             "cache_dir": self.cache_dir or os.environ.get("CACHE_DIR", "./cache"),
@@ -156,9 +203,11 @@ class Cache:
             # Get the sourcode of the funciton
             # This will be used in the hash so that old
             # Caches will not be loaded
-            self.function_info["source"] = "".join(
+            function_info["source"] = "".join(
                 inspect.getsourcelines(function)[0]
             )
+
+        return function_info
 
     def _decorate_callable(self, function: Callable) -> Callable:
         # wraps to support pickling
@@ -171,17 +220,22 @@ class Cache:
             # If the file exist, load it
             if os.path.exists(path) and self._is_valid(path):
                 self.logger.info("Loading cache from {}".format(path))
-                return self.load(path)
+                return self._load(path)
             # else call the function
             result = function(*args, **kwargs)
             # and save the result
             self.logger.info("Saving the computed result at %s", path)
-            self.dump(result, path)
+            self._dump(result, path)
             # If the cache is supposed to have a
             # validity duration then save the creation timestamp
             if self.validity_duration:
                 self._save_creation_time(path)
             return result
+
+        # add a reference to the cached function so we can unpack
+        # The caching if needed
+        setattr(wrapped, "__cached_function", function)
+        setattr(wrapped, "__cacher_instance", self)
         return wrapped
 
     def _save_creation_time(self, path):
@@ -212,17 +266,18 @@ class Cache:
             cache_time = json.load(f)["creation_time"]
         return time() - cache_time < self.validity_duration
 
-    def _get_formatted_path(self, args, kwargs) -> str:
-        params = get_params(self.function_info, args, kwargs)
+    def _get_formatted_path(self, args, kwargs, function_info=None) -> str:
+        function_info = function_info or self.function_info
+        params = get_params(function_info, args, kwargs)
         if "_hash" in self.cache_path:
             params["_hash"] = sha256(
-                {"params": params, "function_info": self.function_info})
+                {"params": params, "function_info": function_info})
         self.logger.debug("Got parameters %s", params)
 
         # Compute the path of the cache for these parameters
-        path = self.function_info["cache_path"].format(
+        path = function_info["cache_path"].format(
             **params,
-            **self.function_info
+            **function_info
         )
         self.logger.debug("Calculated path %s", path)
         return path
@@ -235,7 +290,7 @@ class Cache:
         return wrapped
 
     def decorate(self, function: Callable) -> Callable:
-        self._compute_function_info(function)
+        self.function_info = self._compute_function_info(function)
         wrapped = self._decorate_callable(function)
         wrapped = self._fix_docs(function, wrapped)
         return wrapped

@@ -294,3 +294,25 @@ So we can get the reference to the logger and fully customize it:
     # Make it log to a file
     handler = logging.FileHandler("cache.log")
     logger.addHandler(handler)
+
+
+Manual Caching
+--------------
+If for some reason you need to manually manage your cache, you can use the built in static methods of the ``Cache`` class.
+It will automatically create the needed folders. Moreover, you can get the expected path for a function call.
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    # Store
+    Cache.store({1:2, 3:4}, "./my_custom_cache/best_dict_ever.json)
+
+    # Load
+    best_dict = Cache.load("./my_custom_cache/best_dict_ever.json)
+    
+    @Cache()
+    def test_function(x, y):
+        return 2 * x
+
+    path = Cache.compute_path(test_function, 10, y="ciao")
