@@ -288,7 +288,7 @@ So we can get the reference to the logger and fully customize it:
         return 2 * x
 
     # Get the logger
-    logger = logging.getLogger("cache.f")
+    logger = logging.getLogger("cache.test_function")
     logger.setLevel(logging.DEBUG)
     
     # Make it log to a file
@@ -409,9 +409,10 @@ It will automatically create the needed folders. Moreover, you can get the expec
     # Load
     best_dict = Cache.load("./my_custom_cache/best_dict_ever.json)
 
-    # This would raise an error!
+    # This would not format anything!
     # Cache.store({1:2, 3:4}, "./my_custom_cache/{_hash}.json)
-    
+    # this would save a file called literally called "{_hash}.json"
+
     @Cache()
     def test_function(x, y):
         return 2 * x
