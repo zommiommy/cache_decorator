@@ -9,7 +9,7 @@ addons:
       secure: slwTzeCol51cnAuNDO/P68KkgseB2s8XgUT/10wN8GCZaV6ysLoZnYXn4oQKcFSxFpOIyvM+uPyZvFkZrZl1fBGl/SPKUdhuxcwaFuW2bXHFDMFrPSWVlPQlqZO1yPN/UyWMy6D1vZrTOQKpe9UupK7z0n6eneQSlorEk6/ZYG1TvuIeoP2TSrmCu7RTfE55ozPyUR/uCrXcczW5ypULGQXK9qJw0EeR6do/jnB8/OCXPDrLN7Jj7WyQeBe87m81beR6LgsFbpH0gFGdd1c9illC4XnB9Fi922PL+NopCYce+W9s6TExFha/19jwohThp+mIOIG8PAR4uzH2o6a15wqrszjjxj6ZlauCsr4/Td61ZV/UFHtmWBBipk1Y3kXor8HkUfsRclNAB/C6L1DabMn+YEyQSUaZdBP6keaEdZw97L4logbvXXV8ucLOil8QjQSGK8CoIBSUbe0kuvbOKHJBT8LlsW8g5C6vgCoxoG2ta763g1v2aiQRaOMskiyEyB7McBecj0dUoDMO1tAIcw8/jEvIyVgiU/XcgWQxTwcNLnSc7Y2J2YG/yxUwFzWMZcskVBFT6qeaAGJcPLMXQFnqjqipX4a1cyi3p7KMnPELoC4J1cc+R6x6JwOwU+nFvXne+wINfMdiTCgQ/10B27re+mLC6PWg6fAY0lazEqM=
 language: python
 python:
-- '3.6'
+- '3.8'
 before_install:
 - pip install --upgrade pytest numpy pandas
 install:
