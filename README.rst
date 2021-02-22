@@ -315,6 +315,11 @@ Suppose we erroneusly set the extension to CSV instead of JSON:
         return {"this":{"is":{"not":{"a":"csv"}}}}
 
     test_function(10)
+    # 2021-02-22 13:22:07,286[CRITICAL]: Couldn't save the result of the function. Saving the result as a pickle at:
+    # ./test_10.csv_backup.pkl
+    # The file was gonna be written at:
+    # ./test_10.csv
+
 
 Now we can manually load the value and store it at the correct path, this way the next time the function is called, the cache will be loaded correctly with the right extension.
 
@@ -339,7 +344,7 @@ Now we can manually load the value and store it at the correct path, this way th
     def test_function(x):
         return {"this":{"is":{"not":{"a":"csv"}}}}
 
-    test_function(10) # Load the corrected Cache!
+    test_function(10) # Load the corrected Cache at "./test_10.json"
 
 
 Optionally, one can programmatically sort this out by catching the exception and accessing its fields.
@@ -371,6 +376,12 @@ Moreover, the backup path can be costumized using the ``backup_path`` parameter,
         return {"this":{"is":{"not":{"a":"csv"}}}}
 
     test_function(10, y="ciao")
+    
+    # 2021-02-22 13:22:07,286[CRITICAL]: Couldn't save the result of the function. Saving the result as a pickle at:
+    # ./backup_2021_02_22_13_22_07_18ce30b003e14d16d5e0f749e8205e467aedfbba.pkl
+    # The file was gonna be written at:
+    # ./test.csv
+
         
 
 Internals
