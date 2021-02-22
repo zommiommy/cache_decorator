@@ -354,7 +354,7 @@ Optionally, one can programmatically sort this out by catching the exception and
 
     try:
         test_function(10, y="ciao")
-    except DataNotCompatibleWithExtension as e:
+    except SerializationException as e:
         result = e.result
         backup_path = e.backup_path
         path = e.path
