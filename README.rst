@@ -480,6 +480,7 @@ Next time that the function is called with argumnet ``1``, we will spawn a remot
 For this reason is important to either use a simpler serializzation scheme like json and to fortify the system by setting the cache dir to be read-write only for the current user.
 
 .. code:: bash
+
     chown -r $USER:$USER ./cache
     chmod -r 600 ./cache
 
