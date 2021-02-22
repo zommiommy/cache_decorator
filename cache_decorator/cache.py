@@ -183,6 +183,7 @@ class Cache:
         load, dump = get_load_dump_from_path(path)
         return load(path)
 
+    @staticmethod
     def compute_path(function: Callable, *args, **kwargs) -> str:
         """Return the path that a file would have if the given function
             woule be called with the given arguments.
@@ -317,8 +318,9 @@ class Cache:
             cache_time = json.load(f)["creation_time"]
         return time() - cache_time < self.validity_duration
 
-    def _get_formatted_path(self, args, kwargs, function_info=None, backup=False, extra_kwargs={}) -> str:
+    def _get_formatted_path(self, args, kwargs, function_info=None, backup=False, extra_kwargs=None) -> str:
         """Compute the path adding and computing the needed arguments."""
+        extra_kwargs = extra_kwargs or {}
         if backup:
             formatter = self.backup_path
             extra_kwargs["cache_path"] = self._get_formatted_path(args, kwargs)
