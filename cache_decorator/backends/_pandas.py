@@ -1,13 +1,24 @@
+from ..exception import SerializationException
+
 try:
     import pandas as pd
 except ModuleNotFoundError:
     pandas_dict = {}
     excel_dict = {}
 else:
+    def to_csv(obj, path):
+        if type(obj) is not pd.DataFrame:
+            raise SerializationException(
+                "Cannot serialize as csv anything that's not a pandas Dataframe.",
+                path, obj
+            )
+
+        obj.to_csv(path)
+
     pandas_dict = {
             ".csv"+compression:{
                     "load":lambda path: pd.read_csv(path, index_col=0),
-                    "dump":lambda obj, path: obj.to_csv(path)
+                    "dump":to_csv
                 }
             for compression in ["", ".gz", ".bz2", ".zip", ".xz"]
         }
@@ -17,10 +28,20 @@ else:
     except ModuleNotFoundError:
         excel_dict = {}
     else:
+
+        def to_xlsx(obj, path):
+            if type(obj) is not pd.DataFrame:
+                raise SerializationException(
+                    "Cannot serialize as csv anything that's not a pandas Dataframe.",
+                    path, obj
+                )
+                
+            obj.to_excel(path)
+
         excel_dict = {
             ".xlsx":{
                     "load":pd.read_excel,
-                    "dump":lambda obj, path: obj.to_excel(path)
+                    "dump":to_xlsx
                 },
         }
     

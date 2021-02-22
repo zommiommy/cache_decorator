@@ -1,6 +1,8 @@
+import pytest
+import numpy as np
 from time import sleep
 from shutil import rmtree
-from cache_decorator import Cache
+from cache_decorator import Cache, SerializationException
 from .utils import standard_test
 
 @Cache(
@@ -16,7 +18,20 @@ def cached_function(a):
         "b":[1,2,3]
     }
 
+@Cache(
+    cache_path="{cache_dir}/{_hash}.json",
+    cache_dir="./test_cache"
+)
+def error_function(a):
+    sleep(2)
+    return np.array([1, 2, 3])
+
 def test_json():
     result_1, result_2 = standard_test(cached_function)
     assert result_1 == result_2
+    rmtree("./test_cache")
+
+def test_json_error():
+    with pytest.raises(SerializationException):
+        error_function(1)
     rmtree("./test_cache")

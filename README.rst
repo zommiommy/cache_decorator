@@ -295,6 +295,101 @@ So we can get the reference to the logger and fully customize it:
     handler = logging.FileHandler("cache.log")
     logger.addHandler(handler)
 
+Error Handling
+--------------
+A common problem we noted using the library is that if the saved type is not compatible with the chosen extension,
+the program will raise an exception at the end of the function and we lose all the work done.
+To mitigate this proble, now the cache decorator has a built-in system for handling errors.
+If there is an error in the serializzation of the result, the program will make an automatic backup using pickle.
+This by default will add ``_backup.pkl`` to the end of the original path, but if for any reason this would over-write a file, a random string will be appended.
+And log (with critical level) the path of the backup file and the supposed path where the 
+
+Suppose we erroneusly set the extension to CSV instead of JSON:
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    @Cache("./test_{x}.csv")
+    def test_function(x):
+        return {"this":{"is":{"not":{"a":"csv"}}}}
+
+    test_function(10)
+
+Now we can manually load the value and store it at the correct path, this way the next time the function is called, the cache will be loaded correctly with the right extension.
+
+.. code:: python
+
+    import json
+    import pickle
+
+    # Load the backup
+    with open("./test_10.csv_backup.pkl", "rb") as f:
+        result = pickle.load(f)
+
+    # Save it at the right path
+    with open("./test_10.json", "w") as f:
+        json.dump(f, result) 
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    @Cache("./test_{x}.json")
+    def test_function(x):
+        return {"this":{"is":{"not":{"a":"csv"}}}}
+
+    test_function(10) # Load the corrected Cache!
+
+
+Optionally, one can programmatically sort this out by catching the exception and accessing its fields.
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    @Cache("./test.csv")
+    def test_function(x):
+        return {"this":{"is":{"not":{"a":"csv"}}}}
+
+    try:
+        test_function(10, y="ciao")
+    except DataNotCompatibleWithExtension as e:
+        result = e.result
+        backup_path = e.backup_path
+        path = e.path
+        
+
+Moreover, the backup path can be costumized using the ``backup_path`` parameter, here you can use the same parameter of ``path`` and also ``{_date}``, which is the date of the bakcup, and ``{_rnd}`` which guarantees that the file will not overwrite any other file:
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    @Cache("./test.csv", backup_path="./backup_{date}_{rnd}.pkl")
+    def test_function(x):
+        return {"this":{"is":{"not":{"a":"csv"}}}}
+
+    test_function(10, y="ciao")
+        
+
+Internals
+--------------
+If for any reason you need to get a reference to the wrapped function and its cacher class, you can access them using the internal variables:
+
+.. code:: python
+
+    from cache_decorator import Cache
+
+    @Cache()
+    def test_function(x, y):
+        return 2 * x
+
+    original_test_function = test_function.__cached_function
+    test_function_cacher_class = test_function.__cacher_instance
+
+We do not suggest to use them.
+
 
 Manual Caching
 --------------
@@ -304,15 +399,23 @@ It will automatically create the needed folders. Moreover, you can get the expec
 .. code:: python
 
     from cache_decorator import Cache
+    
+    # you can use the Cache class functions to load and store data easily
+    # but here you can't use a path formatter but you have to pass a complete path.
 
     # Store
     Cache.store({1:2, 3:4}, "./my_custom_cache/best_dict_ever.json)
 
     # Load
     best_dict = Cache.load("./my_custom_cache/best_dict_ever.json)
+
+    # This would raise an error!
+    # Cache.store({1:2, 3:4}, "./my_custom_cache/{_hash}.json)
     
     @Cache()
     def test_function(x, y):
         return 2 * x
 
+
+    # you can get the path where the file would be saved (this does not call the function!).
     path = Cache.compute_path(test_function, 10, y="ciao")

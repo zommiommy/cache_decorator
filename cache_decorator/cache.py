@@ -2,12 +2,14 @@
 import os
 import sys
 import json
+import pickle
+import datetime
 import inspect
 import logging
 from time import time
 from functools import wraps
 from typing import Tuple, Callable, Union
-from .utils import get_params, parse_time
+from .utils import get_params, parse_time, random_string
 from .backends import get_load_dump_from_path
 
 # Dictionary are not hashable and the python hash is not consistent
@@ -39,7 +41,8 @@ class Cache:
         validity_duration: Union[int, str] = -1,
         use_source_code: bool = True,
         log_level: str = "critical",
-        log_format: str = '%(asctime)-15s[%(levelname)s]: %(message)s'
+        log_format: str = '%(asctime)-15s[%(levelname)s]: %(message)s',
+        backup_path: str = None,
     ):
         """
         Cache the results of a function (or method).
@@ -125,18 +128,30 @@ class Cache:
             Formatting of the default logger on stderr. Informations on how the formatting works can be found at
             https://docs.python.org/3/library/logging.html . Moreover, as explained in the log_level, you can get
             a referfence to the logger and fully customize it.
+        backup_path: str = None,
+            If the serialization fails, the decorator will try to save the computed result as a pickle.
+            This parameter is the formatter for the path where to save the backup result.
+            If it's None, it will use the same path of the cache and append `_backup.pkl` at the end.
+            This will never overwrite any file, so if a file at the current path is present, a random path will be
+            generated.
+            For this reason in the formatter you can use any variable such as {cache_dir}, {cache_path}, or the arguments
+            of the function. Moreover, there is also another two additional parameters, {_date} which is the date of the backup, and {_rnd} which is a random string that will 
+            guarantee that no file has the same name.  
             ```
         """
         self.log_level = log_level
         self.log_format = log_format
-        self.cache_path = cache_path
         self.args_to_ignore = args_to_ignore
-        self.cache_dir = cache_dir
-        self._load, self._dump = get_load_dump_from_path(cache_path)
-        self.validity_duration = parse_time(validity_duration)
         self.use_source_code = use_source_code
+        self.validity_duration = parse_time(validity_duration)
 
+        self._load, self._dump = get_load_dump_from_path(cache_path)
 
+        self.cache_path = cache_path
+        self.backup_path = backup_path or (cache_path + "_backup.pkl")
+        self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
+
+    @staticmethod
     def store(obj, path: str) -> None:
         """Store an object at a path, this automatically choose the correct backend.
         
@@ -151,6 +166,7 @@ class Cache:
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
         dump(obj, path)
 
+    @staticmethod
     def load(path: str):
         """
         Load an object from a file, this automatically choose the correct backend.
@@ -186,9 +202,6 @@ class Cache:
         function_args_specs = inspect.getfullargspec(function)
 
         function_info = {
-            # The default cache_dir is ./cache but it can be setted with
-            # the eviornment variable CACHE_DIR
-            "cache_dir": self.cache_dir or os.environ.get("CACHE_DIR", "./cache"),
             # Name of the function
             "function_name": function.__name__,
             # Arguments names
@@ -196,7 +209,6 @@ class Cache:
             "defaults": function_args_specs.defaults or [],
             "kwonlydefaults": function_args_specs.kwonlydefaults or {},
             "args_to_ignore": self.args_to_ignore,
-            "cache_path": self.cache_path,
         }
 
         if self.use_source_code:
@@ -208,6 +220,40 @@ class Cache:
             )
 
         return function_info
+
+    def _backup(self, result, path, exception, args, kwargs):
+        """This function handle the backupping of the data when an the serialization fails."""
+        date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        # Ensure that the we won't overwrite anything
+        while True:
+            # Generate a new random value
+            rnd = random_string(40) # hardcoded length but if they are enough for git it's enough for us.
+            backup_path = self._get_formatted_path(
+                args, kwargs, 
+                backup=True, extra_kwargs={"_date":date, "_rnd":rnd}
+            )
+            # Check for the existance
+            if os.path.exists(backup_path):
+                # If the file exists and the rnd var is not used
+                # we force it so we don't get stuck in the loop.
+                if "{_rnd}" not in self.backup_path:
+                    self.backup_path += "{_rnd}"
+                continue
+            break
+
+        # Inform the user about hte problem
+        self.logger.critical(
+            "Couldn't save the result of the function. Saving the result as a pickle at:\n%s"
+            "\nThe file was gonna be written at:\n%s\n", 
+            backup_path, path
+        )
+        # Backup the result
+        os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+        with open(backup_path, "wb") as f:
+            pickle.dump(result, f)
+        # Re-raise the exception
+        exception.backup_path = backup_path
+        raise exception
 
     def _decorate_callable(self, function: Callable) -> Callable:
         # wraps to support pickling
@@ -225,7 +271,11 @@ class Cache:
             result = function(*args, **kwargs)
             # and save the result
             self.logger.info("Saving the computed result at %s", path)
-            self._dump(result, path)
+            try:
+                self._dump(result, path)
+            except Exception as e:
+                self._backup(result, path, e, args, kwargs)
+
             # If the cache is supposed to have a
             # validity duration then save the creation timestamp
             if self.validity_duration:
@@ -266,18 +316,28 @@ class Cache:
             cache_time = json.load(f)["creation_time"]
         return time() - cache_time < self.validity_duration
 
-    def _get_formatted_path(self, args, kwargs, function_info=None) -> str:
+    def _get_formatted_path(self, args, kwargs, function_info=None, backup=False, extra_kwargs={}) -> str:
+        """Compute the path adding and computing the needed arguments."""
+        if backup:
+            formatter = self.backup_path
+            extra_kwargs["cache_path"] = self._get_formatted_path(args, kwargs)
+        else:
+            formatter = self.cache_path
+        
         function_info = function_info or self.function_info
         params = get_params(function_info, args, kwargs)
-        if "_hash" in self.cache_path:
-            params["_hash"] = sha256(
-                {"params": params, "function_info": function_info})
+        
+        if "_hash" in formatter:
+            params["_hash"] = sha256({"params": params, "function_info": function_info})
+
         self.logger.debug("Got parameters %s", params)
 
         # Compute the path of the cache for these parameters
-        path = function_info["cache_path"].format(
+        path = formatter.format(
+            cache_dir=self.cache_dir,
             **params,
-            **function_info
+            **function_info,
+            **extra_kwargs,
         )
         self.logger.debug("Calculated path %s", path)
         return path
