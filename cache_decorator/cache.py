@@ -41,7 +41,7 @@ class Cache:
         validity_duration: Union[int, str] = -1,
         use_source_code: bool = True,
         log_level: str = "critical",
-        log_format: str = '%(asctime)-15s[%(levelname)s]: %(message)s',
+        log_format: str = '%(asctime)-15s [%(levelname)s]: %(message)s',
         backup_path: str = None,
     ):
         """
@@ -243,9 +243,10 @@ class Cache:
 
         # Inform the user about hte problem
         self.logger.critical(
-            "Couldn't save the result of the function. Saving the result as a pickle at:\n%s"
+            "Couldn't save the result of the function '%s'. "
+            "Saving the result as a pickle at:\n%s"
             "\nThe file was gonna be written at:\n%s\n", 
-            backup_path, path
+            self.function_info["function_name"], backup_path, path
         )
         # Backup the result
         os.makedirs(os.path.dirname(backup_path), exist_ok=True)
