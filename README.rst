@@ -77,8 +77,8 @@ get slightly different results, here's three of them:
     :target: https://coveralls.io/github/zommiommy/cache_decorator?branch=master
     :alt: Coveralls Coverage
 
-.. |pip| image:: https://badge.fury.io/py/cache_decorator.svg
-    :target: https://badge.fury.io/py/cache_decorator
+.. |pip| image:: https://badge.fury.io/py/cache-decorator.svg
+    :target: https://badge.fury.io/py/cache-decorator
     :alt: Pypi project
 
 .. |downloads| image:: https://pepy.tech/badge/cache_decorator
