@@ -73,7 +73,7 @@ setup(
     tests_require=test_deps,
     # Add here the package dependencies
     install_requires=[
-        "dict_hash >= 1.1.14",
+        "dict_hash >= 1.1.16",
     ],
     extras_require=extras,
 )
