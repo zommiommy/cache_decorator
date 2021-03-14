@@ -21,7 +21,7 @@ def test_validity_duration():
 
     files = list(os.listdir("./test_cache"))
     for file in files:
-        if "_time.json" in file:
+        if ".metadata" in file:
             os.remove("./test_cache/" + file)
 
     start = perf_counter()

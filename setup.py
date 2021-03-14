@@ -38,8 +38,6 @@ test_deps =[
 
 extras = {
     'test': test_deps,
-    "compress_pickle":["compress_pickle"],
-    "compress_json":["compress_json", "dict_hash[compress_json]"],
     "numpy":["numpy", "dict_hash[numpy]"],
     "pandas":["pandas", "dict_hash[pandas]"],
     "excel":["openpyxl", "xlrd"],
@@ -73,7 +71,14 @@ setup(
     tests_require=test_deps,
     # Add here the package dependencies
     install_requires=[
-        "dict_hash >= 1.1.14",
+        "dict_hash[compress_json] >= 1.1.14",  # This is used to get a consistent hash of the arguments
+        "humanize",             # This is used for the metadata to be readable
+
+        # The following packages have no dependancies so it should be safe to add
+        "compress_pickle",      # For compressed pickles
+        "compress_json",        # For compressed json
+        "deflate_dict",         # To save arguments to the json
+
     ],
     extras_require=extras,
 )

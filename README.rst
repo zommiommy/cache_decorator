@@ -6,17 +6,11 @@ cache_decorator
 A simple decorator to cache the results of computationally heavy functions.
 The package automatically serialize and deserialize depending on the format of the save path.
 
-By default it supports only ``.json`` and ``.pkl`` but other extensions can be enabled by using the extra feature:
-
-[compress_json] ``.json.gz .json.bz .json.lzma``
-
-[compress_pickle] ``.pkl.gz .pkl.bz .pkl.lzma .pkl.zip``
+By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz .pkl.bz .pkl.lzma .pkl.zip`` but other extensions can be enabled by using the extra feature:
 
 [numpy] ``.npy .npz``
 
 [pandas] ``.csv .csv.gz .csv.bz2 .csv.zip .csv.xz``
-
-[excel] ``.xlsx``
 
 The extra feature ``[numba]`` enables the caching of numba objects.
 
@@ -40,13 +34,13 @@ Optionally you can specify the single features you want:
 
 .. code:: shell
 
-    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel, numba]"
+    pip install "cache_decorator[numpy, pandas, numba]"
 
 If the installation fails you can try to add ``--user`` at the end of the command as:
 
 .. code:: shell
 
-    pip install "cache_decorator[compress_json, compress_pickle, numpy, pandas, excel, numba]" --user
+    pip install "cache_decorator[numpy, pandas, numba]" --user
 
 
 Tests Coverage

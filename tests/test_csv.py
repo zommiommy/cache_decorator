@@ -12,7 +12,7 @@ from .utils import standard_test_dataframes
 )
 def cached_function(a):
     sleep(2)
-    return pd.DataFrame(np.random.randint(0,100,size=(100, 4)), columns=list('ABCD'))
+    return pd.DataFrame([[1, 1.0, "a"], [2, 2.0, "b"], [3, 3.0, "c"]], columns=list('ABC'))
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.csv",

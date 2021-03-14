@@ -3,14 +3,16 @@ import os
 import sys
 import json
 import pickle
+import humanize
 import datetime
 import inspect
 import logging
 from time import time
 from functools import wraps
+from datetime import datetime
 from typing import Tuple, Callable, Union
 from .utils import get_params, parse_time, random_string
-from .backends import get_load_dump_from_path
+from .backends import Backend
 
 # Dictionary are not hashable and the python hash is not consistent
 # between runs so we have to use an external dictionary hashing package
@@ -43,6 +45,9 @@ class Cache:
         log_level: str = "critical",
         log_format: str = '%(asctime)-15s [%(levelname)s]: %(message)s',
         backup_path: str = None,
+        backup: bool = True,
+        dump_kwargs:dict = {},
+        load_kwargs:dict = {},
     ):
         """
         Cache the results of a function (or method).
@@ -137,6 +142,9 @@ class Cache:
             For this reason in the formatter you can use any variable such as {cache_dir}, {cache_path}, or the arguments
             of the function. Moreover, there is also another two additional parameters, {_date} which is the date of the backup, and {_rnd} which is a random string that will 
             guarantee that no file has the same name.  
+        backup: bool = True,
+            If the cache should backup the result to a .pkl in case of exception during the serializzation.
+            This flag is mainly for debug pourpouses.
             ```
         """
         self.log_level = log_level
@@ -145,11 +153,12 @@ class Cache:
         self.use_source_code = use_source_code
         self.validity_duration = parse_time(validity_duration)
 
-        self._load, self._dump = get_load_dump_from_path(cache_path)
-
         self.cache_path = cache_path
-        self.backup_path = backup_path or (cache_path + "_backup.pkl")
+        self.is_backup_enabled = backup
+        self.backup_path = backup_path or (cache_path + ".backup.pkl")
         self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
+
+        self.load_kwargs, self.dump_kwargs = load_kwargs, dump_kwargs
 
     @staticmethod
     def store(obj, path: str) -> None:
@@ -162,9 +171,8 @@ class Cache:
             path: str,
                 Where to store the file, based on its extension it will choose the correct backend.
         """
-        load, dump = get_load_dump_from_path(path)
         os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
-        dump(obj, path)
+        Backend({}, {}).dump(obj, path)
 
     @staticmethod
     def load(path: str):
@@ -180,8 +188,7 @@ class Cache:
         -------
         The loaded object.
         """
-        load, dump = get_load_dump_from_path(path)
-        return load(path)
+        return Backend({}, {}).load({}, path)
 
     @staticmethod
     def compute_path(function: Callable, *args, **kwargs) -> str:
@@ -224,7 +231,7 @@ class Cache:
 
     def _backup(self, result, path, exception, args, kwargs):
         """This function handle the backupping of the data when an the serialization fails."""
-        date = datetime.datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
+        date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         # Ensure that the we won't overwrite anything
         while True:
             # Generate a new random value
@@ -255,7 +262,96 @@ class Cache:
             pickle.dump(result, f)
         # Re-raise the exception
         exception.backup_path = backup_path
-        raise exception
+        exception.path = path
+        exception.result = result
+        return exception
+
+    def _get_metadata_path(self, path):
+        return path + ".metadata"
+
+    def _load(self, path):
+        # Check if the cache exists and is readable
+        if not os.access(path, os.R_OK):
+            self.logger.info("The cache at path '%s' does not exists or we don't have the permission to read it.", path)
+            return None
+
+        self.logger.info("Loading cache from %s", path)
+
+        metadata_path = self._get_metadata_path(path)
+
+        # Load the metadata if present
+        if os.access(metadata_path, os.R_OK):
+            self.logger.info("Loading the metadata file at '%s'", metadata_path)
+            with open(metadata_path, "r") as f:
+                metadata = json.load(f)
+        else:
+            self.logger.info("The metadata file at '%s' do not exists or we don't have the permissions to read it.", metadata_path)
+            # TODO: do we need to to more stuff?
+            metadata = {}
+
+        # Check if the cache is still valid
+        if self.validity_duration is not None:
+            enlapsed_time = time() - metadata.get("creation_time", float("-inf"))
+            if  enlapsed_time > self.validity_duration:
+                os.remove(path)
+                return None 
+
+        # actually load the values
+        return Backend(self.load_kwargs, self.dump_kwargs).load(metadata.get("backend_metadata", {}), path)
+
+    def _dump(self, args, kwargs, result, path, start_time, end_time):
+        # Dump the file
+        self.logger.info("Saving the cache at %s", path)
+        dump_start_time = time()
+        backend_metadata = Backend(self.load_kwargs, self.dump_kwargs).dump(result, path) or {}
+        dump_end_time = time()
+
+        # Compute the metadata
+        metadata = {
+            # When the cache was created
+            "creation_time": start_time,
+            "creation_time_human": datetime.fromtimestamp(
+                start_time
+            ).strftime("%Y-%m-%d %H:%M:%S"),
+
+            # How much the function took to compute the result
+            "time_delta":end_time - start_time,
+            "time_delta_human":humanize.precisedelta(end_time - start_time),
+
+            # How much time it took to serialize the result and save it to a file
+            "file_dump_time":dump_end_time - dump_start_time,
+            "file_dump_time_human":humanize.precisedelta(
+                dump_end_time - dump_start_time
+            ),
+
+            # How big is the serialized result
+            "file_dump_size":os.path.getsize(path),
+            "file_dump_size_human":humanize.naturalsize(os.path.getsize(path)),
+
+            # The arguments used to load and dump the file
+            "load_kwargs":self.load_kwargs,
+            "dump_kwargs":self.dump_kwargs,
+
+            # Informations about the function
+            "function_name":self.function_info["function_name"],
+            "function_file":"%s:%s"%(
+                self.decorated_function.__code__.co_filename,
+                self.decorated_function.__code__.co_firstlineno
+            ),
+            "parameter":get_params(self.function_info, args, kwargs),
+            "args_to_ignore":self.function_info["args_to_ignore"],
+            "source":self.function_info.get("source", None),
+
+            # The data reserved for the backend to corretly serialize and 
+            # de-serialize the values
+            "backend_metadata":backend_metadata,
+        }
+
+        metadata_path = self._get_metadata_path(path)
+        self.logger.info("Saving the cache meta-data at %s", metadata_path)
+        with open(metadata_path, "w") as f:
+            json.dump(metadata, f, indent=4)
+
 
     def _decorate_callable(self, function: Callable) -> Callable:
         # wraps to support pickling
@@ -263,25 +359,32 @@ class Cache:
         def wrapped(*args, **kwargs):
             # Get the path
             path = self._get_formatted_path(args, kwargs)
-            # ensure that the cache folder exist
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            # If the file exist, load it
-            if os.path.exists(path) and self._is_valid(path):
-                self.logger.info("Loading cache from {}".format(path))
-                return self._load(path)
-            # else call the function
-            result = function(*args, **kwargs)
-            # and save the result
-            self.logger.info("Saving the computed result at %s", path)
-            try:
-                self._dump(result, path)
-            except Exception as e:
-                self._backup(result, path, e, args, kwargs)
+            # Try to load the cache
+            result = self._load(path)
+            # if we got a result, reutrn it
+            if result is not None:
+                return result
 
-            # If the cache is supposed to have a
-            # validity duration then save the creation timestamp
-            if self.validity_duration:
-                self._save_creation_time(path)
+            # ensure that the cache folder exist and we can write to it.
+            # we can't do this in the dump because we want to check all we can
+            # before computing the function.
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            if os.access(path, os.W_OK):
+                raise ValueError("We don't have the permissions to write to %s"%path)
+            
+            # otherwise compute the result
+            start_time = time()
+            result = function(*args, **kwargs)
+            end_time = time()
+
+            # Save the result
+            try:
+                self._dump(args, kwargs, result, path, start_time, end_time)
+            except Exception as e:
+                if self.is_backup_enabled:
+                    raise self._backup(result, path, e, args, kwargs)
+                raise e
+
             return result
 
         # add a reference to the cached function so we can unpack
@@ -289,34 +392,6 @@ class Cache:
         setattr(wrapped, "__cached_function", function)
         setattr(wrapped, "__cacher_instance", self)
         return wrapped
-
-    def _save_creation_time(self, path):
-        cache_date = path + "_time.json"
-        self.logger.info("Saving the cache time meta-data at %s", cache_date)
-        with open(cache_date, "w") as f:
-            json.dump({"creation_time": time()}, f)
-
-    def _is_valid(self, path):
-        # If validation to "" or 0
-        # then it's disabled and the cache is always valid
-        if not self.validity_duration:
-            return True
-        # path of the saved creation_time
-        date_path = path + "_time.json"
-        # Check if there is the creation_time
-        if not os.path.exists(date_path):
-            # in this case the cache file exists
-            # but not the creation time
-            # this might means that the file was deleted
-            # or the cache was previously used without
-            # validity time
-            self.logger.warning(
-                "Warning no creation time at %s. Therefore the cache will be considered not valid", date_path)
-            return False
-        # Open the file e confront the time
-        with open(date_path, "r") as f:
-            cache_time = json.load(f)["creation_time"]
-        return time() - cache_time < self.validity_duration
 
     def _get_formatted_path(self, args, kwargs, function_info=None, backup=False, extra_kwargs=None) -> str:
         """Compute the path adding and computing the needed arguments."""
@@ -354,15 +429,19 @@ class Cache:
 
     def decorate(self, function: Callable) -> Callable:
         self.function_info = self._compute_function_info(function)
+        self.decorated_function = function
         wrapped = self._decorate_callable(function)
         wrapped = self._fix_docs(function, wrapped)
         return wrapped
 
     def __call__(self, function):
         self.logger = logging.getLogger(__name__ + "." + function.__name__)
-        handler = logging.StreamHandler(sys.stderr)
-        handler.setFormatter(logging.Formatter(self.log_format))
-        self.logger.addHandler(handler)
+        # Do not re-initialize loggers if we have to cache multiple functions
+        # with the same name
+        if not self.logger.hasHandlers():
+            handler = logging.StreamHandler(sys.stderr)
+            handler.setFormatter(logging.Formatter(self.log_format))
+            self.logger.addHandler(handler)
 
         if self.log_level.lower() not in log_levels:
             raise ValueError("The logger level {} is not a supported one. The available ones are {}".format(
