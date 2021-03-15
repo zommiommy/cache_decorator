@@ -6,7 +6,8 @@ from .utils import standard_test_arrays
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.npz",
-    cache_dir="./test_cache"
+    cache_dir="./test_cache",
+    backup=False,
 )
 def cached_function_single(a):
     sleep(2)
@@ -14,7 +15,8 @@ def cached_function_single(a):
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.npz",
-    cache_dir="./test_cache"
+    cache_dir="./test_cache",
+    backup=False,
 )
 def cached_function_tuple(a):
     sleep(2)
@@ -22,7 +24,8 @@ def cached_function_tuple(a):
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.npz",
-    cache_dir="./test_cache"
+    cache_dir="./test_cache",
+    backup=False,
 )
 def cached_function_list(a):
     sleep(2)
@@ -30,7 +33,8 @@ def cached_function_list(a):
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.npz",
-    cache_dir="./test_cache"
+    cache_dir="./test_cache",
+    backup=False,
 )
 def cached_function_dict(a):
     sleep(2)

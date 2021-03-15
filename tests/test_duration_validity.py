@@ -6,7 +6,8 @@ from .utils import standard_test_dataframes
 @Cache(
     cache_path="{cache_dir}/{_hash}.pkl",
     cache_dir="./test_cache",
-    validity_duration="3s"
+    validity_duration="3s",
+    backup=False,
 )
 def cached_function(a):
     sleep(1)

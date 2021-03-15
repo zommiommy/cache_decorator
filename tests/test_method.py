@@ -7,7 +7,10 @@ class A:
     def __init__(self):
         pass
     
-    @Cache(cache_dir="./test_cache")
+    @Cache(
+        cache_dir="./test_cache",
+        backup=False,
+    )
     def cached_function(self, a):
         sleep(2)
         return [1, 2, 3]

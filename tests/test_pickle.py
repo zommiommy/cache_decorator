@@ -4,7 +4,8 @@ from cache_decorator import Cache
 from .utils import standard_test_array
 
 @Cache(
-    cache_dir="./test_cache"
+    cache_dir="./test_cache",
+    backup=False,
 )
 def cached_function(a):
     sleep(2)

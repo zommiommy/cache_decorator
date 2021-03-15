@@ -155,7 +155,7 @@ class Cache:
 
         self.cache_path = cache_path
         self.is_backup_enabled = backup
-        self.backup_path = backup_path or (cache_path + ".backup.pkl")
+        self.backup_path = backup_path
         self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
 
         self.load_kwargs, self.dump_kwargs = load_kwargs, dump_kwargs
@@ -203,7 +203,7 @@ class Cache:
         instance = getattr(function, "__cacher_instance")
         function = getattr(function, "__cached_function")
 
-        return instance._get_formatted_path(args, kwargs, instance._compute_function_info(function))
+        return instance._get_formatted_path(args, kwargs, function_info=instance._compute_function_info(function))
 
 
     def _compute_function_info(self, function: Callable):
@@ -231,6 +231,14 @@ class Cache:
 
     def _backup(self, result, path, exception, args, kwargs):
         """This function handle the backupping of the data when an the serialization fails."""
+
+        # Check if it's a structured path
+        if isinstance(path, list):
+            return self._backup(result, path[0], exception, args, kwargs)
+                
+        elif isinstance(path, dict):
+            return self._backup(result, next(path.values()), exception, args, kwargs)
+
         date = datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
         # Ensure that the we won't overwrite anything
         while True:
@@ -238,7 +246,12 @@ class Cache:
             rnd = random_string(40) # hardcoded length but if they are enough for git it's enough for us.
             backup_path = self._get_formatted_path(
                 args, kwargs, 
-                backup=True, extra_kwargs={"_date":date, "_rnd":rnd}
+                formatter=self.backup_path,
+                extra_kwargs={
+                    "_date":date, 
+                    "_rnd":rnd,
+                    "cache_path":self._get_formatted_path(args, kwargs),
+                }
             )
             # Check for the existance
             if os.path.exists(backup_path):
@@ -270,9 +283,33 @@ class Cache:
         return path + ".metadata"
 
     def _load(self, path):
+
+        # Check if it's a structured path
+        if isinstance(path, list):
+            result = []
+            for p in path:
+                cache = self._load(p)
+
+                if cache is None:
+                    return None
+
+                result.append(cache)
+            return result
+
+        elif isinstance(path, dict):
+            result = {}
+            for key, p in path.items():
+                cache = self._load(p)
+
+                if cache is None:
+                    return None
+
+                result[key] = cache
+            return result
+
         # Check if the cache exists and is readable
-        if not os.access(path, os.R_OK):
-            self.logger.info("The cache at path '%s' does not exists or we don't have the permission to read it.", path)
+        if not os.path.isfile(path):
+            self.logger.info("The cache at path '%s' does not exists.", path)
             return None
 
         self.logger.info("Loading cache from %s", path)
@@ -280,12 +317,12 @@ class Cache:
         metadata_path = self._get_metadata_path(path)
 
         # Load the metadata if present
-        if os.access(metadata_path, os.R_OK):
+        if os.path.isfile(metadata_path):
             self.logger.info("Loading the metadata file at '%s'", metadata_path)
             with open(metadata_path, "r") as f:
                 metadata = json.load(f)
         else:
-            self.logger.info("The metadata file at '%s' do not exists or we don't have the permissions to read it.", metadata_path)
+            self.logger.info("The metadata file at '%s' do not exists.", metadata_path)
             # TODO: do we need to to more stuff?
             metadata = {}
 
@@ -300,8 +337,27 @@ class Cache:
         return Backend(self.load_kwargs, self.dump_kwargs).load(metadata.get("backend_metadata", {}), path)
 
     def _dump(self, args, kwargs, result, path, start_time, end_time):
+
+        # Check if it's a structured path
+        if isinstance(path, list):
+            assert isinstance(result,list)
+            assert len(result) == len(path)
+            for r, p in zip(result, path):
+                self._dump(args, kwargs, r, p, start_time, end_time)
+            return 
+                
+        elif isinstance(path, dict):
+            assert isinstance(result, dict)
+            assert set(result.keys()) == set(path.keys())
+
+            for key in result.keys():
+                self._dump(args, kwargs, result[key], path[key], start_time, end_time)
+            return 
+        
+
         # Dump the file
         self.logger.info("Saving the cache at %s", path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         dump_start_time = time()
         backend_metadata = Backend(self.load_kwargs, self.dump_kwargs).dump(result, path) or {}
         dump_end_time = time()
@@ -364,14 +420,8 @@ class Cache:
             # if we got a result, reutrn it
             if result is not None:
                 return result
-
-            # ensure that the cache folder exist and we can write to it.
-            # we can't do this in the dump because we want to check all we can
-            # before computing the function.
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            if os.access(path, os.W_OK):
-                raise ValueError("We don't have the permissions to write to %s"%path)
             
+            self.logger.info("Computing the result for %s %s", args, kwargs)
             # otherwise compute the result
             start_time = time()
             result = function(*args, **kwargs)
@@ -393,15 +443,23 @@ class Cache:
         setattr(wrapped, "__cacher_instance", self)
         return wrapped
 
-    def _get_formatted_path(self, args, kwargs, function_info=None, backup=False, extra_kwargs=None) -> str:
-        """Compute the path adding and computing the needed arguments."""
+    def _get_formatted_path(self, args, kwargs, formatter=None, function_info=None, extra_kwargs=None) -> str:
+        """Compute the path adding and computing the needed arguments."""        
+        formatter = formatter or self.cache_path
+
+        if isinstance(formatter, list):
+            return [
+                self._get_formatted_path(args, kwargs, f)
+                for f in formatter
+            ]
+        elif isinstance(formatter, dict):
+            return {
+                key:self._get_formatted_path(args, kwargs, v)
+                for key, v in formatter.items()
+            }
+
         extra_kwargs = extra_kwargs or {}
-        if backup:
-            formatter = self.backup_path
-            extra_kwargs["cache_path"] = self._get_formatted_path(args, kwargs)
-        else:
-            formatter = self.cache_path
-        
+
         function_info = function_info or self.function_info
         params = get_params(function_info, args, kwargs)
         
@@ -418,6 +476,7 @@ class Cache:
             **extra_kwargs,
         )
         self.logger.debug("Calculated path %s", path)
+
         return path
 
     def _fix_docs(self, function: Callable, wrapped: Callable) -> Callable:

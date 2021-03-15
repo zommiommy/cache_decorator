@@ -7,6 +7,7 @@ from .utils import standard_test_array
 @Cache(
     cache_dir="./test_cache",
     args_to_ignore=["x"],
+    backup=False,
 )
 def cached_function(a, x):
     sleep(2)

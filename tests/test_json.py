@@ -9,6 +9,7 @@ from .utils import standard_test
     cache_path="{cache_dir}/{_hash}.json",
     cache_dir="./test_cache",
     dump_kwargs={"indent":4},
+    backup=False,
 )
 def cached_function(a):
     sleep(2)

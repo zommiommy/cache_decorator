@@ -5,7 +5,8 @@ from .utils import standard_test_array
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.pkl.gz",
-    cache_dir="./test_cache"
+    cache_dir="./test_cache",
+    backup=False,
 )
 def cached_function(a):
     sleep(2)

@@ -9,8 +9,8 @@ class A:
     
     @Cache(
         cache_dir="./test_cache",
-        args_to_ignore=["x"]
-        
+        args_to_ignore=["x"],
+        backup=False,  
         )
     def cached_function(self, a, x):
         sleep(2)

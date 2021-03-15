@@ -7,5 +7,5 @@ def x(a, b):
     pass
 
 def test_unknown_extension():
-    with pytest.raises(SerializationException):
+    with pytest.raises(Exception):
         x(1, 2)
