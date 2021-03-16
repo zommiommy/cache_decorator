@@ -33,8 +33,6 @@ try:
         )
         return model
 
-
-
     def test_keras_model():
         x_train = np.random.randint(0, 2, size=(1000, 2))
         y_train = np.array([

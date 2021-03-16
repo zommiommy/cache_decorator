@@ -1,4 +1,5 @@
 
+import re
 import os
 import sys
 import json
@@ -394,6 +395,7 @@ class Cache:
                 self.decorated_function.__code__.co_filename,
                 self.decorated_function.__code__.co_firstlineno
             ),
+            # TODO re-insert
             #"parameter":get_params(self.function_info, args, kwargs),
             "args_to_ignore":self.function_info["args_to_ignore"],
             "source":self.function_info.get("source", None),
@@ -467,6 +469,20 @@ class Cache:
             params["_hash"] = sha256({"params": params, "function_info": function_info})
 
         self.logger.debug("Got parameters %s", params)
+
+        # Handle the composite paths
+        for match in re.finditer(r"\{([^\{]+)(:?\..+?)+\}", formatter):
+            # Extract the matching string
+            match = match.group(0)
+            # Get the name of the base element and the attributes chain
+            root, *attrs = match[1:-1].split(".")
+            # Get the params to use for the attributes chain
+            root = params[root]
+            # Follow the attributes chain
+            for attr in attrs:
+                root = getattr(root, attr)
+            # Replace the result in the formatter
+            formatter = formatter.replace(match, str(root))
 
         # Compute the path of the cache for these parameters
         path = formatter.format(
