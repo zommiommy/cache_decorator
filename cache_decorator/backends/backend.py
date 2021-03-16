@@ -8,6 +8,7 @@ from .compress_pickle_backend import CompressPickleBackend
 # Failable backends
 from .pandas_csv_backend import PandasCsvBackend
 from .numpy_backend import NumpyBackend
+from .keras_model_backend import KerasModelBackend
 
 from .exceptions import SerializationException, DeserializationException
 
@@ -22,6 +23,7 @@ class Backend:
                 CompressPickleBackend,
                 NumpyBackend,
                 PandasCsvBackend,
+                KerasModelBackend
             ]
             if backend is not None
         ]

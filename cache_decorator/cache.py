@@ -394,7 +394,7 @@ class Cache:
                 self.decorated_function.__code__.co_filename,
                 self.decorated_function.__code__.co_firstlineno
             ),
-            "parameter":get_params(self.function_info, args, kwargs),
+            #"parameter":get_params(self.function_info, args, kwargs),
             "args_to_ignore":self.function_info["args_to_ignore"],
             "source":self.function_info.get("source", None),
 
