@@ -234,7 +234,7 @@ class Cache:
         """This function handle the backupping of the data when an the serialization fails."""
 
         # Check if it's a structured path
-        if isinstance(path, list):
+        if isinstance(path, list) or isinstance(path, tuple):
             return self._backup(result, path[0], exception, args, kwargs)
                 
         elif isinstance(path, dict):
@@ -286,7 +286,7 @@ class Cache:
     def _load(self, path):
 
         # Check if it's a structured path
-        if isinstance(path, list):
+        if isinstance(path, list) or isinstance(path, tuple):
             result = []
             for p in path:
                 cache = self._load(p)
@@ -295,6 +295,9 @@ class Cache:
                     return None
 
                 result.append(cache)
+
+            if isinstance(path, tuple):
+                result = tuple(result)
             return result
 
         elif isinstance(path, dict):
@@ -340,8 +343,8 @@ class Cache:
     def _dump(self, args, kwargs, result, path, start_time, end_time):
 
         # Check if it's a structured path
-        if isinstance(path, list):
-            assert isinstance(result,list)
+        if isinstance(path, list) or isinstance(path, tuple):
+            assert isinstance(result,list) or isinstance(result,tuple)
             assert len(result) == len(path)
             for r, p in zip(result, path):
                 self._dump(args, kwargs, r, p, start_time, end_time)
@@ -454,6 +457,13 @@ class Cache:
                 self._get_formatted_path(args, kwargs, f)
                 for f in formatter
             ]
+
+        if isinstance(formatter, tuple):
+            return tuple([
+                self._get_formatted_path(args, kwargs, f)
+                for f in formatter
+            ])
+
         elif isinstance(formatter, dict):
             return {
                 key:self._get_formatted_path(args, kwargs, v)
