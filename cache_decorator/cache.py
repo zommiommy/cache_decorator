@@ -395,8 +395,6 @@ class Cache:
                 self.decorated_function.__code__.co_filename,
                 self.decorated_function.__code__.co_firstlineno
             ),
-            # TODO re-insert
-            #"parameter":get_params(self.function_info, args, kwargs),
             "args_to_ignore":self.function_info["args_to_ignore"],
             "source":self.function_info.get("source", None),
 
@@ -404,6 +402,21 @@ class Cache:
             # de-serialize the values
             "backend_metadata":backend_metadata,
         }
+
+        params = {}
+        for key, val in get_params(self.function_info, args, kwargs).items():
+            if key in self.args_to_ignore:
+                continue
+
+            try:
+                # Check if it's json serializable
+                json.dumps(val)
+                params[key] = val
+            except:
+                pass
+
+
+        metadata["parameters"] = params
 
         metadata_path = self._get_metadata_path(path)
         self.logger.info("Saving the cache meta-data at %s", metadata_path)

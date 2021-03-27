@@ -29,9 +29,11 @@ try:
         model = get_model()
         model.fit(
             x_train, y_train,
-            epochs=10
+            epochs=100
         )
         return model
+
+
 
     def test_keras_model():
         x_train = np.random.randint(0, 2, size=(1000, 2))
