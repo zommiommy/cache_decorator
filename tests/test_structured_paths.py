@@ -21,6 +21,23 @@ def test_list_paths():
     standard_test(cached_function_list)
     rmtree("./test_cache")
 
+@Cache(
+    cache_path=(
+        "{cache_dir}/first_value2_{_hash}.pkl",
+        "{cache_dir}/second_value2_{_hash}.pkl",
+        "{cache_dir}/third_value2_{_hash}.pkl",
+    ),
+    cache_dir="./test_cache",
+    log_level="debug",
+    backup=False,
+)
+def cached_function_tuple(a):
+    sleep(2)
+    return (1, "a", 1.0)
+
+def test_tuple_paths():
+    standard_test(cached_function_tuple)
+    rmtree("./test_cache")
 
 @Cache(
     cache_path={

@@ -1,5 +1,5 @@
 
-PYTHON_PATH=~/anaconda3/bin/
+PYTHON_PATH=""
 
 install:
 	$(PYTHON_PATH)pip install --user --upgrade .
