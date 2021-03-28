@@ -11,7 +11,7 @@ import logging
 from time import time
 from functools import wraps
 from datetime import datetime
-from typing import Tuple, Callable, Union
+from typing import Tuple, Callable, Union, Dict, List
 from .utils import get_params, parse_time, random_string
 from .backends import Backend
 
@@ -38,7 +38,7 @@ def cache(function):
 class Cache:
     def __init__(
         self,
-        cache_path: str = "{cache_dir}/{function_name}/{_hash}.pkl",
+        cache_path: Union[str, Tuple[str], List[str], Dict[str, str]] = "{cache_dir}/{function_name}/{_hash}.pkl",
         args_to_ignore: Tuple[str] = (),
         cache_dir: str = None,
         validity_duration: Union[int, str] = -1,
@@ -63,7 +63,7 @@ class Cache:
 
         Arguments
         ---------
-        cache_path: str = "{cache_dir}/{function_name}/{_hash}.pkl",
+        cache_path: Union[str, Tuple[str], List[str], Dict[str, str]] = "{cache_dir}/{function_name}/{_hash}.pkl",
             Where to save the caches.
             It's a string format and the available variables are
             `cache_dir` the directory specified in the other argument.

@@ -1,8 +1,30 @@
 
 from .backend_template import BackendTemplate
+import warnings
+
+def is_consistent(v):
+    return all(
+        str(type(v[i])) == str(type(v[0]))
+        for i in range(len(v))
+    )
+
+def get_vector_dtype(vector):
+    t = str(vector.dtype)
+    if t  == "object":
+        return "str"
+    return t
+    
 
 try:
     import pandas as pd
+
+    common_message = (
+        " contains values of multiple types therefore the data will be saved as required"
+        " but we don't guarantee that"
+        " they will be loaded as the same types as pandas does not support this.\n"
+        "Consider using pickle (.pkl) or compress pickle (.pkl.gz, ...) to cache this complex type"
+        " in a consistent manner."
+    )
 
     class PandasCsvBackend(BackendTemplate):
 
@@ -33,23 +55,40 @@ try:
             return PandasCsvBackend.does_the_extension_match(path) and isinstance(obj_to_serialize, pd.DataFrame)    
 
         def dump(self, obj_to_serialize: pd.DataFrame, path:str) -> dict: 
+
+            for column in obj_to_serialize.columns:
+                if not is_consistent(obj_to_serialize[column]):
+                    warnings.warn("The column '{}'".format(column) + common_message )
+
+
+            if not is_consistent(obj_to_serialize.index):
+                warnings.warn("The index"  + common_message)
+                
+
+            if not is_consistent(obj_to_serialize.columns):
+                warnings.warn("The column names"  + common_message)
+                
+
             obj_to_serialize.to_csv(path, **self._dump_kwargs)
+
+
             # Return the types of the columns to be saved as metadata
             return {
                 "type":"pandas",
                 "columns_types":{
-                    column:str(type_val) 
-                    for column, type_val in zip(
-                        obj_to_serialize.columns, 
-                        obj_to_serialize.dtypes
-                    )
-                }
+                    column:get_vector_dtype(obj_to_serialize[column]) 
+                    for column in obj_to_serialize.columns
+                },
+                "index_type":get_vector_dtype(obj_to_serialize.index),
+                "columns_names_type":get_vector_dtype(obj_to_serialize.columns),
             }
 
         def load(self, metadata:dict, path:str) -> object:
             df = pd.read_csv(path, **self._load_kwargs)
             # Convert back the types of the columns to the original ones
             df =  df.astype(metadata["columns_types"])
+            df.index = df.index.astype(metadata["index_type"])
+            df.columns = df.columns.astype(metadata["columns_names_type"])
             return df
 
 except ModuleNotFoundError:
