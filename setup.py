@@ -71,7 +71,7 @@ setup(
     tests_require=test_deps,
     # Add here the package dependencies
     install_requires=[
-        "dict_hash[compress_json] >= 1.1.16",  # This is used to get a consistent hash of the arguments
+        "dict_hash >= 1.1.16",  # This is used to get a consistent hash of the arguments
         "humanize",             # This is used for the metadata to be readable
 
         # The following packages have no dependancies so it should be safe to add
