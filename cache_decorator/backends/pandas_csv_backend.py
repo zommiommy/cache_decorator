@@ -2,21 +2,42 @@
 from .backend_template import BackendTemplate
 import warnings
 
-def is_consistent(v):
-    return all(
-        str(type(v[i])) == str(type(v[0]))
-        for i in range(len(v))
-    )
-
-def get_vector_dtype(vector):
-    t = str(vector.dtype)
-    if t  == "object":
-        return "str"
-    return t
-    
-
 try:
     import pandas as pd
+
+    # WHEN CHECKING FOR THE TYPE OF AN OBJECT IN A SERIES BEWARE THAT:
+    #
+    # series = pd.Series([1, 2, 3, 4])
+    #
+    # for s in series:
+    #     print(str(type(s)))
+    # outputs;
+    #   `<class 'int'>
+    #   `<class 'int'>
+    #   `<class 'int'>
+    #   `<class 'int'>
+    #
+    # str(type(series[2]))
+    # outputs:
+    #   "<class 'numpy.int64'>"
+
+    def is_consistent(series: pd.Series) -> bool:
+        """Check that all the values in the series are of the same type."""
+        if series.dtype != "object":
+            return True
+
+        expected_type = str(type(series[0]))
+        return all(
+            expected_type == str(type(s))
+            for s in series
+        )
+
+    def get_vector_dtype(series: pd.Series) -> str:
+        """Get which type to use to serialize the type of the series"""
+        t = str(series.dtype)
+        if t  == "object":
+            return "str"
+        return t
 
     common_message = (
         " contains values of multiple types therefore the data will be saved as required"
