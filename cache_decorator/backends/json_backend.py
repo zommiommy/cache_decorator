@@ -2,20 +2,27 @@ import json
 from .backend_template import BackendTemplate
 
 class JsonBackend(BackendTemplate):
+    SUPPORTED_EXTENSIONS = [".json"]
 
     def __init__(self, load_kwargs, dump_kwargs):
         super(JsonBackend, self).__init__(load_kwargs, dump_kwargs)
+        
+    @staticmethod
+    def support_path(path:str) -> bool:
+        return any(
+            path.endswith(extension)
+            for extension in JsonBackend.SUPPORTED_EXTENSIONS
+        ) 
 
     @staticmethod
     def can_deserialize(metadata: dict, path:str) -> bool:
         """Must return if the current backend can handle the type of data."""
-        return path.endswith(".json")
+        return JsonBackend.support_path(path)
 
     @staticmethod
     def can_serialize(obj_to_serialize: object, path:str) -> bool:
         """Returns if we can serialize the given type as the given extension"""
-        # We can only create json
-        return path.endswith(".json")
+        return JsonBackend.support_path(path)
 
     def dump(self, obj_to_serialize: object, path:str) -> dict:
         """Serialize and save the object at the given path.

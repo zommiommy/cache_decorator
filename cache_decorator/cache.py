@@ -171,10 +171,8 @@ class Cache:
             if not test_bk.support_path(path):
                 raise ValueError((
                     "There is not backend that can support the path '{}'. "
-                    "A common occurence is if the extension is `.keras` because"
-                    "we only support a tar of keras folders, so you might want "
-                    "to use `.keras.tar` or the compressed `.keras.tar.gz`."
-                ).format(path))
+                    "The available extensions are '{}'."
+                ).format(path, test_bk.get_supported_extensions()))
         elif isinstance(path, list) or isinstance(path, tuple):
             for sub_path in path:
                 self._check_path_sanity(sub_path)

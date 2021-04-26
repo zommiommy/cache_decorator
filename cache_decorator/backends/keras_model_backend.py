@@ -27,22 +27,23 @@ try:
         raise ValueError("Cannot find the right extension")
 
     class KerasModelBackend(BackendTemplate):
+        SUPPORTED_EXTENSIONS = [
+            ".keras.tar",
+            ".keras.tar.gz",
+            ".keras.tar.bz2",
+            ".keras.tar.xz",
+        ]
 
         def __init__(self, load_kwargs, dump_kwargs):
             super(KerasModelBackend, self).__init__(load_kwargs, dump_kwargs)
 
         @staticmethod
-        def support_path(path: str) -> bool:
+        def support_path(path:str) -> bool:
             return any(
                 path.endswith(extension)
-                for extension in [
-                    ".keras.tar",
-                    ".keras.tar.gz",
-                    ".keras.tar.bz2",
-                    ".keras.tar.xz",
-                ]
-            )
-
+                for extension in KerasModelBackend.SUPPORTED_EXTENSIONS
+            ) 
+            
         @staticmethod
         def can_deserialize(metadata: dict, path:str) -> bool:
             return KerasModelBackend.support_path(path)

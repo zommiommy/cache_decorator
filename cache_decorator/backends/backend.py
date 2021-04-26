@@ -1,3 +1,4 @@
+from typing import Set
 
 from .json_backend import JsonBackend
 from .compress_json_backend import CompressJsonBackend
@@ -31,9 +32,17 @@ class Backend:
     def support_path(self, path:str) -> bool:
         """If exists at least one backend that can handle the current path."""
         return any(
-            backend.can_deserialize({}, path)
+            backend.support_path(path)
             for backend in self.backends
         )
+
+    def get_supported_extensions(self) -> Set[str]:
+        """Get the supported extensions."""
+        return {
+            ext
+            for backend in self.backends
+            for ext in backend.SUPPORTED_EXTENSIONS
+        }
 
     def dump(self, obj_to_serialize: object, path:str) -> dict:
         """Serialize and save the object at the given path.

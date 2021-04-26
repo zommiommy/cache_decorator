@@ -48,6 +48,13 @@ try:
     )
 
     class PandasCsvBackend(BackendTemplate):
+        SUPPORTED_EXTENSIONS = [
+            ".csv",
+            ".csv.gz",
+            ".csv.bz2",
+            ".csv.xz",
+            ".csv.zip",
+        ]
 
         def __init__(self, load_kwargs, dump_kwargs):
             load_kwargs = load_kwargs.copy()
@@ -55,25 +62,19 @@ try:
             super(PandasCsvBackend, self).__init__(load_kwargs, dump_kwargs)
 
         @staticmethod
-        def does_the_extension_match(path: str) -> bool:
+        def support_path(path:str) -> bool:
             return any(
                 path.endswith(extension)
-                for extension in [
-                    ".csv",
-                    ".csv.gz",
-                    ".csv.bz2",
-                    ".csv.xz",
-                    ".csv.zip",
-                ]
+                for extension in PandasCsvBackend.SUPPORTED_EXTENSIONS
             ) 
 
         @staticmethod
         def can_deserialize(metadata: dict, path:str) -> bool:
-            return PandasCsvBackend.does_the_extension_match(path) and metadata.get("type", None) == "pandas"
+            return PandasCsvBackend.support_path(path) and metadata.get("type", None) == "pandas"
 
         @staticmethod
         def can_serialize(obj_to_serialize: object, path:str) -> bool:
-            return PandasCsvBackend.does_the_extension_match(path) and isinstance(obj_to_serialize, pd.DataFrame)    
+            return PandasCsvBackend.support_path(path) and isinstance(obj_to_serialize, pd.DataFrame)    
 
         def dump(self, obj_to_serialize: pd.DataFrame, path:str) -> dict: 
 

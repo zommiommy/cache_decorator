@@ -1,3 +1,5 @@
+from typing import List
+
 class BackendTemplate:
     """To serialize and de-serialize data we need double dynamic dispatching, 
     thus this is the template for all the implementations.
@@ -6,6 +8,7 @@ class BackendTemplate:
     backend = Backend(load_kwargs, dump_kwargs)
     backend.load(backend.dump(object, "./test"), "./test") == object
     """
+    SUPPORTED_EXTENSIONS = []
 
     def __init__(self, load_kwargs, dump_kwargs):
         """The init must always handle kwargs since """
@@ -17,9 +20,10 @@ class BackendTemplate:
         """Returns if the current backend MIGHT serialize and deserialize the given path.
         This is a might because the given object might not be serializable, but we
         support the extension."""
-        raise NotImplementedError(
-            "This backend function has to be implemented by its subclass."
-        )
+        return any(
+            path.endswith(extension)
+            for extension in BackendTemplate.SUPPORTED_EXTENSIONS
+        ) 
         
     @staticmethod
     def can_serialize(obj_to_serialize: object, path:str) -> bool:
