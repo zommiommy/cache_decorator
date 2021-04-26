@@ -160,6 +160,33 @@ class Cache:
         self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
 
         self.load_kwargs, self.dump_kwargs = load_kwargs, dump_kwargs
+        self._check_path_sanity(cache_path)
+
+    def _check_path_sanity(self, path: Union[str, Tuple[str], List[str], Dict[str, str]]):
+        """Check that at least one backend exists that can handle the given path.
+        This is just a quality of life check to raise an exception early and not
+        after the computation is done."""
+        test_bk = Backend({}, {})
+        if isinstance(path, str):
+            if not test_bk.support_path(path):
+                raise ValueError((
+                    "There is not backend that can support the path '{}'. "
+                    "A common occurence is if the extension is `.keras` because"
+                    "we only support a tar of keras folders, so you might want "
+                    "to use `.keras.tar` or the compressed `.keras.tar.gz`."
+                ).format(path))
+        elif isinstance(path, list) or isinstance(path, tuple):
+            for sub_path in path:
+                self._check_path_sanity(sub_path)
+        elif isinstance(path, dict):
+            for arg, sub_path in path.items():
+                self._check_path_sanity(sub_path)
+        else:
+            raise ValueError((
+                    "Sorry, the path '{}' is not in one of the supported formats."
+                    "We support a string, a list, tuple, or dict of paths."
+                ).format(path)
+            )
 
     @staticmethod
     def store(obj, path: str) -> None:

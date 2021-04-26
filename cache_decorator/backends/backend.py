@@ -28,6 +28,12 @@ class Backend:
             if backend is not None
         ]
 
+    def support_path(self, path:str) -> bool:
+        """If exists at least one backend that can handle the current path."""
+        return any(
+            backend.can_deserialize({}, path)
+            for backend in self.backends
+        )
 
     def dump(self, obj_to_serialize: object, path:str) -> dict:
         """Serialize and save the object at the given path.
@@ -42,7 +48,7 @@ class Backend:
                     result = {}
                 return result
         raise SerializationException(
-            "There is no backend to serialize the given object at the given path",
+            "There is no backend to serialize the given object of type {} at the given path {}".format(type(obj_to_serialize), path),
             path,
             obj_to_serialize
             )
@@ -54,6 +60,6 @@ class Backend:
             if backend.can_deserialize(metadata, path):
                 return backend.load(metadata, path)
         raise DeserializationException(
-            "There is no backend to deserialize the given object at the given path",
+            "There is no backend to deserialize the given object at the given path {}".format(path),
             path
             )

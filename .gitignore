@@ -1,5 +1,6 @@
 */__pycache__/*
 .scrapy
+./cache
 
 test_cache
 htmlcov

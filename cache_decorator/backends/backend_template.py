@@ -13,6 +13,15 @@ class BackendTemplate:
         self._dump_kwargs = dump_kwargs
 
     @staticmethod
+    def support_path(path:str) -> bool:
+        """Returns if the current backend MIGHT serialize and deserialize the given path.
+        This is a might because the given object might not be serializable, but we
+        support the extension."""
+        raise NotImplementedError(
+            "This backend function has to be implemented by its subclass."
+        )
+        
+    @staticmethod
     def can_serialize(obj_to_serialize: object, path:str) -> bool:
         """Must return if the current backend can handle the type of data."""
         raise NotImplementedError(

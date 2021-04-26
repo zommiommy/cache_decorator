@@ -32,7 +32,7 @@ try:
             super(KerasModelBackend, self).__init__(load_kwargs, dump_kwargs)
 
         @staticmethod
-        def does_the_extension_match(path: str) -> bool:
+        def support_path(path: str) -> bool:
             return any(
                 path.endswith(extension)
                 for extension in [
@@ -45,11 +45,11 @@ try:
 
         @staticmethod
         def can_deserialize(metadata: dict, path:str) -> bool:
-            return KerasModelBackend.does_the_extension_match(path)
+            return KerasModelBackend.support_path(path)
 
         @staticmethod
         def can_serialize(obj_to_serialize: object, path:str) -> bool:
-            return KerasModelBackend.does_the_extension_match(path) 
+            return KerasModelBackend.support_path(path) 
 
 
         def dump(self, obj_to_serialize: Model, path:str) -> dict: 
