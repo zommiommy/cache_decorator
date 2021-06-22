@@ -197,7 +197,9 @@ class Cache:
             path: str,
                 Where to store the file, based on its extension it will choose the correct backend.
         """
-        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        dirname = os.path.dirname(os.path.abspath(path))
+        if dirname != "":
+            os.makedirs(dirname, exist_ok=True)
         Backend({}, {}).dump(obj, path)
 
     @staticmethod
@@ -389,7 +391,9 @@ class Cache:
 
         # Dump the file
         self.logger.info("Saving the cache at %s", path)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
+        dirname = os.path.dirname(path)
+        if dirname != "":
+            os.makedirs(dirname, exist_ok=True)
         dump_start_time = time()
         backend_metadata = Backend(self.load_kwargs, self.dump_kwargs).dump(result, path) or {}
         dump_end_time = time()
