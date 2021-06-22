@@ -296,7 +296,10 @@ class Cache:
             self.function_info["function_name"], backup_path, path
         )
         # Backup the result
-        os.makedirs(os.path.dirname(backup_path), exist_ok=True)
+        dirname = os.path.dirname(backup_path)
+        if dirname != "":
+            os.makedirs(dirname, exist_ok=True)
+
         with open(backup_path, "wb") as f:
             pickle.dump(result, f)
         # Re-raise the exception
