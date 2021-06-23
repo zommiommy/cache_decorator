@@ -26,7 +26,7 @@ try:
         if series.dtype != "object":
             return True
 
-        expected_type = str(type(series[0]))
+        expected_type = str(type(series.values[0]))
         return all(
             expected_type == str(type(s))
             for s in series
