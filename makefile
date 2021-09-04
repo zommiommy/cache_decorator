@@ -15,3 +15,8 @@ build:
 
 publish:
 	$(PYTHON_PATH)twine upload "./dist/$$(ls ./dist | grep .tar.gz | sort | tail -n 1)"
+
+pytest:
+	rm -rfd test_cache
+	pytest -s
+	rm -rfd test_cache

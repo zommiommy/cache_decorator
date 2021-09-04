@@ -48,13 +48,18 @@ try:
     )
 
     class PandasCsvBackend(BackendTemplate):
-        SUPPORTED_EXTENSIONS = [
-            ".csv",
-            ".csv.gz",
-            ".csv.bz2",
-            ".csv.xz",
-            ".csv.zip",
-        ]
+        SUPPORTED_EXTENSIONS = {
+            ".csv":",",
+            ".csv.gz":",",
+            ".csv.bz2":",",
+            ".csv.xz":",",
+            ".csv.zip":",",
+            ".tsv":"\t",
+            ".tsv.gz":"\t",
+            ".tsv.bz2":"\t",
+            ".tsv.xz":"\t",
+            ".tsv.zip":"\t",
+        }
 
         def __init__(self, load_kwargs, dump_kwargs):
             load_kwargs = load_kwargs.copy()
@@ -89,9 +94,18 @@ try:
 
             if not is_consistent(obj_to_serialize.columns):
                 warnings.warn("The column names"  + common_message)
-                
 
-            obj_to_serialize.to_csv(path, **self._dump_kwargs)
+            obj_to_serialize.to_csv(
+                path, 
+                sep=self.SUPPORTED_EXTENSIONS[
+                    next(
+                        x
+                        for x in self.SUPPORTED_EXTENSIONS
+                        if path.endswith(x)
+                    )
+                ], 
+                **self._dump_kwargs
+            )
 
 
             # Return the types of the columns to be saved as metadata
@@ -106,7 +120,17 @@ try:
             }
 
         def load(self, metadata:dict, path:str) -> object:
-            df = pd.read_csv(path, **self._load_kwargs)
+            df = pd.read_csv(
+                path, 
+                sep=self.SUPPORTED_EXTENSIONS[
+                    next(
+                        x
+                        for x in self.SUPPORTED_EXTENSIONS
+                        if path.endswith(x)
+                    )
+                ], 
+                **self._load_kwargs
+            )
             # Convert back the types of the columns to the original ones
             df =  df.astype(metadata["columns_types"])
             df.index = df.index.astype(metadata["index_type"])
