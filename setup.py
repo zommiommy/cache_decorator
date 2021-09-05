@@ -72,11 +72,11 @@ setup(
     # Add here the package dependencies
     install_requires=[
         "dict_hash >= 1.1.16",  # This is used to get a consistent hash of the arguments
-        "humanize",             # This is used for the metadata to be readable
+        "humanize >= 3.4.1",    # This is used for the metadata to be readable
 
         # The following packages have no dependancies so it should be safe to add
-        "compress_pickle",      # For compressed pickles
-        "compress_json",        # For compressed json
+        "compress_pickle >= 2.0.1",      # For compressed pickles
+        "compress_json>=1.0.4",        # For compressed json
         "deflate_dict",         # To save arguments to the json
     ],
     extras_require=extras,
