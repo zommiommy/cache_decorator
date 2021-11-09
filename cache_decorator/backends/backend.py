@@ -1,5 +1,7 @@
 from typing import Set
 
+from .txt_backend import TxtBackend
+
 from .json_backend import JsonBackend
 from .compress_json_backend import CompressJsonBackend
 
@@ -24,7 +26,8 @@ class Backend:
                 CompressPickleBackend,
                 NumpyBackend,
                 PandasCsvBackend,
-                KerasModelBackend
+                KerasModelBackend,
+                TxtBackend,
             ]
             if backend is not None
         ]
