@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 from time import sleep
+import os
 from shutil import rmtree
 from cache_decorator import Cache, SerializationException
 from .utils import standard_test
@@ -23,4 +24,5 @@ def cached_function(a):
 def test_json():
     result_1, result_2 = standard_test(cached_function)
     assert result_1 == result_2
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

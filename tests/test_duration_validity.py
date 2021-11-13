@@ -1,5 +1,6 @@
 from time import sleep, perf_counter
 from shutil import rmtree
+import os
 from cache_decorator import Cache
 from .utils import standard_test_dataframes
 
@@ -33,4 +34,5 @@ def test_validity_duration():
     assert time_2 <= time_3
     assert abs(time_1 - time_3) < 0.5
 
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

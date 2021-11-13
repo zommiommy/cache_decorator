@@ -1,4 +1,5 @@
 import numpy as np
+import os
 import pandas as pd
 from time import sleep
 from shutil import rmtree
@@ -16,4 +17,5 @@ def cached_function(a):
 
 def test_csv_bz2():
     standard_test_dataframes(cached_function)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

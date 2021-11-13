@@ -1,6 +1,7 @@
 import pytest
 import numpy as np
 import pandas as pd
+import os
 from time import sleep
 from shutil import rmtree
 from cache_decorator import Cache
@@ -18,4 +19,5 @@ def cached_function(a):
 def test_csv():
     result_1, result_2 = standard_test(cached_function)
     assert result_1 == result_2
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

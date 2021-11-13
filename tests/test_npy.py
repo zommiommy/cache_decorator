@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import os
 from time import sleep
 from shutil import rmtree
 from cache_decorator import Cache, SerializationException
@@ -16,4 +17,5 @@ def cached_function(a):
 
 def test_npy():
     standard_test_array(cached_function)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

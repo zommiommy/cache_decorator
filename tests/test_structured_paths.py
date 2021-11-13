@@ -1,5 +1,6 @@
 from time import sleep
 from shutil import rmtree
+import os
 from cache_decorator import Cache
 from .utils import standard_test
 
@@ -19,7 +20,8 @@ def cached_function_list(a):
 
 def test_list_paths():
     standard_test(cached_function_list)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")
 
 @Cache(
     cache_path=(
@@ -37,7 +39,8 @@ def cached_function_tuple(a):
 
 def test_tuple_paths():
     standard_test(cached_function_tuple)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")
 
 @Cache(
     cache_path={
@@ -57,4 +60,5 @@ def cached_function_dict(a):
 
 def test_dict_paths():
     standard_test(cached_function_dict)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

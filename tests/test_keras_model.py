@@ -29,11 +29,10 @@ try:
         model = get_model()
         model.fit(
             x_train, y_train,
-            epochs=100
+            epochs=100,
+            verbose=False
         )
         return model
-
-
 
     def test_keras_model():
         x_train = np.random.randint(0, 2, size=(1000, 2))
@@ -42,8 +41,9 @@ try:
             for a, b in x_train
         ])
 
-        standard_test(train, args=((x_train, y_train), (x_train, y_train), (x_train + 1, y_train), ))
-        
+        standard_test(train, args=((x_train, y_train),
+                      (x_train, y_train), (x_train + 1, y_train), ))
+
     def test_keras_model_performance():
         x_train = np.random.randint(0, 2, size=(1000, 2))
         y_train = np.array([
@@ -55,7 +55,8 @@ try:
 
         trained_model2 = train(x_train, y_train)
 
-        assert trained_model1.evaluate(x_train, y_train) == trained_model2.evaluate(x_train, y_train)
+        assert trained_model1.evaluate(x_train, y_train, verbose=False) == trained_model2.evaluate(
+            x_train, y_train, verbose=False)
 
 except ModuleNotFoundError:
     pass

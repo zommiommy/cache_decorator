@@ -1,5 +1,6 @@
 from time import sleep
 from shutil import rmtree
+import os
 from cache_decorator import Cache
 from .utils import standard_test
 
@@ -20,4 +21,5 @@ def cached_function(a):
 def test_json_bz():
     result_1, result_2 = standard_test(cached_function)
     assert result_1 == result_2
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

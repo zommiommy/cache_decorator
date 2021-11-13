@@ -27,4 +27,5 @@ def test_exception():
         assert backup == e.result == 1
 
 
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

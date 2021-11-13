@@ -1,4 +1,5 @@
 from time import sleep
+import os
 from shutil import rmtree
 from cache_decorator import Cache
 from .utils import standard_test_array
@@ -19,4 +20,5 @@ class A:
 def test_method():
     a = A()
     standard_test_array(a.cached_function)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")
