@@ -70,8 +70,7 @@ try:
             if path.endswith(".npy"):
                 with open(path, "wb") as f:
                     np.save(f, obj_to_serialize)
-
-            if isinstance(obj_to_serialize, dict):
+            elif isinstance(obj_to_serialize, dict):
                 np.savez_compressed(path, **obj_to_serialize)
             elif isinstance(obj_to_serialize, (list, tuple, set)):
                 np.savez_compressed(path, *obj_to_serialize)
