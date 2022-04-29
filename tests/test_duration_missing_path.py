@@ -31,4 +31,5 @@ def test_validity_duration():
 
     assert abs(time_1 - time_2) < 0.5
 
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

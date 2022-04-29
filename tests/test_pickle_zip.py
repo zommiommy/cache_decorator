@@ -1,4 +1,5 @@
 from time import sleep
+import os
 from shutil import rmtree
 from cache_decorator import Cache
 from .utils import standard_test_array
@@ -14,4 +15,5 @@ def cached_function(a):
 
 def test_pickle_zip():
     standard_test_array(cached_function)
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

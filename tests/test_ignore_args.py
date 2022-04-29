@@ -2,6 +2,7 @@ import numpy as np
 from time import sleep
 from shutil import rmtree
 from cache_decorator import Cache
+import os
 from .utils import standard_test_array
 
 @Cache(
@@ -15,4 +16,5 @@ def cached_function(a, x):
 
 def test_ignore_args():
     standard_test_array(cached_function, args=((1,2), (1,3), (2,2)))
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

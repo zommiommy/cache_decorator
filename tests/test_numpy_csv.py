@@ -4,7 +4,7 @@ import os
 from time import sleep
 from shutil import rmtree
 from cache_decorator import Cache
-from .utils import standard_test_dataframes
+from .utils import standard_test_arrays
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.csv.xz",
@@ -13,9 +13,11 @@ from .utils import standard_test_dataframes
 )
 def cached_function(a):
     sleep(2)
-    return pd.DataFrame(np.random.randint(0,100,size=(100, 4)), columns=list('ABCD'))
+    return np.zeros((10, 10))
 
-def test_csv_xz():
-    standard_test_dataframes(cached_function)
+def test_numpy_csv():
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")
+    standard_test_arrays(cached_function)
     if os.path.exists("./test_cache"):
         rmtree("./test_cache")

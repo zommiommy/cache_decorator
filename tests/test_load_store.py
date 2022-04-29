@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import os
 from time import sleep
 from shutil import rmtree
 from cache_decorator import Cache
@@ -20,4 +21,5 @@ def test_load_store():
 
     assert test_obj == Cache.load("./test_cache/test_load_store.pkl")
 
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

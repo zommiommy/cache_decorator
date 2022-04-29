@@ -1,6 +1,7 @@
 import numpy as np
 from time import sleep
 from shutil import rmtree
+import os
 from cache_decorator import Cache
 from .utils import standard_test_array
 
@@ -19,4 +20,5 @@ def test_ignore_args():
         args=((1,), (1,), (2,)),
         kwargs=({"x":1}, {"x":2}, {"x":1})
     )
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")

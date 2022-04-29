@@ -1,5 +1,6 @@
 from time import sleep
 from shutil import rmtree
+import os
 from cache_decorator import Cache
 from .utils import standard_test_array
 
@@ -22,7 +23,8 @@ def test_gtattr_path():
     arg2 = Test("my_awesome_struct_but_different")
 
     standard_test_array(cached_function, args=((arg1,), (arg1,), (arg2,)))
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")
 
 @Cache(
     cache_path="{cache_dir}/value_{a.name.name}.pkl",
@@ -39,4 +41,5 @@ def test_gtattr_recursive_path():
     arg2 = Test(Test("my_awesome_struct_but_different"))
 
     standard_test_array(cached_function2, args=((arg1,), (arg1,), (arg2,)))
-    rmtree("./test_cache")
+    if os.path.exists("./test_cache"):
+        rmtree("./test_cache")
