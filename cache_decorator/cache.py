@@ -11,7 +11,7 @@ import logging
 from time import time
 from functools import wraps
 from datetime import datetime
-from typing import Tuple, Callable, Union, Dict, List
+from typing import Tuple, Callable, Union, Dict, List, Optional
 from .utils import get_params, parse_time, random_string
 from .backends import Backend
 
@@ -40,15 +40,16 @@ class Cache:
         self,
         cache_path: Union[str, Tuple[str], List[str], Dict[str, str]] = "{cache_dir}/{function_name}/{_hash}.pkl",
         args_to_ignore: Tuple[str] = (),
-        cache_dir: str = None,
+        cache_dir: Optional[str] = None,
         validity_duration: Union[int, str] = -1,
         use_source_code: bool = True,
         log_level: str = "critical",
         log_format: str = '%(asctime)-15s [%(levelname)s]: %(message)s',
-        backup_path: str = None,
+        backup_path: Optional[str] = None,
         backup: bool = True,
         dump_kwargs:dict = {},
         load_kwargs:dict = {},
+        enable_cache_arg_name: Optional[str] = None,
     ):
         """
         Cache the results of a function (or method).
@@ -130,6 +131,7 @@ class Cache:
                 return 2 * x
             logger = logging.getLogger("cache.test")
             logger.setLevel(logging.DEBUG)
+            ```
         log_format: str = '%(asctime)-15s[%(levelname)s]: %(message)s'
             Formatting of the default logger on stderr. Informations on how the formatting works can be found at
             https://docs.python.org/3/library/logging.html . Moreover, as explained in the log_level, you can get
@@ -146,11 +148,16 @@ class Cache:
         backup: bool = True,
             If the cache should backup the result to a .pkl in case of exception during the serializzation.
             This flag is mainly for debug pourpouses.
-            ```
+        enable_cache_arg_name: Optional[str] = None,
+            This paramer specify the name of a boolean argument that, if given
+            to the cached function, will enable or disable the caching 
+            dynamically. If the argument is not passed the cache will be 
+            enabled by default. This argument, if passed, will automatically be
+            added to the `args_to_ignore` so that it doesn't ruin the caching.
         """
         self.log_level = log_level
         self.log_format = log_format
-        self.args_to_ignore = args_to_ignore
+        self.args_to_ignore = list(args_to_ignore)
         self.use_source_code = use_source_code
         self.validity_duration = parse_time(validity_duration)
 
@@ -160,6 +167,11 @@ class Cache:
         self.cache_dir = cache_dir or os.environ.get("CACHE_DIR", "./cache")
 
         self.load_kwargs, self.dump_kwargs = load_kwargs, dump_kwargs
+        self.enable_cache_arg_name = enable_cache_arg_name
+
+        if self.enable_cache_arg_name is not None:
+            self.args_to_ignore.append(self.enable_cache_arg_name)
+
         self._check_path_sanity(cache_path)
 
     def _check_path_sanity(self, path: Union[str, Tuple[str], List[str], Dict[str, str]]):
@@ -313,6 +325,14 @@ class Cache:
     def _get_metadata_path(self, path):
         return path + ".metadata"
 
+    def _is_cache_enabled(self, args, kwargs):
+        if self.enable_cache_arg_name is None:
+            return True, args, kwargs
+
+        cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
+
+        return cache_enabled, args, kwargs
+
     def _load(self, path):
 
         # Check if it's a structured path
@@ -463,6 +483,12 @@ class Cache:
         # wraps to support pickling
         @wraps(function)
         def wrapped(*args, **kwargs):
+            cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
+            # if the cache is not enabled just forward the call
+            if not cache_enabled:
+                self.logger.info("The cache is disabled")
+                return function(*args, **kwargs)
+
             # Get the path
             path = self._get_formatted_path(args, kwargs)
             # Try to load the cache

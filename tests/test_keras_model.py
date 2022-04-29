@@ -1,5 +1,6 @@
 from cache_decorator import Cache
 from .utils import standard_test
+from time import sleep
 
 try:
     import numpy as np
@@ -27,10 +28,7 @@ try:
     )
     def train(x_train, y_train):
         model = get_model()
-        model.fit(
-            x_train, y_train,
-            epochs=100
-        )
+        sleep(3)
         return model
 
 
