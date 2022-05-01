@@ -14,6 +14,34 @@ By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz
 
 The extra feature ``[numba]`` enables the caching of numba objects.
 
+.. code:: python
+
+    import time
+    import numpy as np
+    import pandas as pd
+    from cache_decorator import Cache
+
+    @Cache(
+        cache_path={
+            "info": "/tmp/{function_name}/{_hash}.json.xz",
+            "data": "/tmp/{function_name}/{_hash}.csv.gz",
+        },
+        validity_duration="24d",
+        args_to_ignore=("verbose",),
+        enable_cache_arg_name="enable_cache",
+    )
+    def function_to_cache(seed: int, verbose: bool = True):
+        np.random.seed(seed)
+        if verbose:
+            print(f"using seed {seed}")
+        return {
+            "info": {"timestamp": time.time(), "seed": seed,},
+            "data": pd.DataFrame(
+                np.random.randint(0, 100, size=(100, 4)), columns=list("ABCD")
+            ),
+        }
+
+
 How do I install this package?
 ----------------------------------------------
 As usual, just download it using pip:
