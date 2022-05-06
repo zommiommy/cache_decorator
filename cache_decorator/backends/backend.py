@@ -10,6 +10,7 @@ from .compress_pickle_backend import CompressPickleBackend
 
 # Failable backends
 from .pandas_csv_backend import PandasCsvBackend
+from .pandas_embedding_backend import PandasEmbeddingBackend
 from .numpy_backend import NumpyBackend
 from .keras_model_backend import KerasModelBackend
 
@@ -26,6 +27,7 @@ class Backend:
                 CompressPickleBackend,
                 NumpyBackend,
                 PandasCsvBackend,
+                PandasEmbeddingBackend,
                 KerasModelBackend,
                 TxtBackend,
             ]

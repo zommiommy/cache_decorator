@@ -12,6 +12,11 @@ By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz
 
 [pandas] ``.csv .csv.gz .csv.bz2 .csv.zip .csv.xz``
 
+Also there is an optimized format for numerical dataframes:
+[pandas] ``.embedding .embedding.gz .embedding.bz2.embedding.xz``
+This creates an optionally compressed tar archive with pickles of the index and 
+columns and a ``.npy`` of the values.
+
 The extra feature ``[numba]`` enables the caching of numba objects.
 
 .. code:: python
