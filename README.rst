@@ -14,7 +14,7 @@ By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz
 
 Also there is an optimized format for numerical dataframes:
 
-[pandas] ``.embedding .embedding.gz .embedding.bz2.embedding.xz``
+[pandas] ``.embedding .embedding.gz .embedding.bz2 .embedding.xz``
 
 This creates an optionally compressed tar archive with pickles of the index and 
 columns and a ``.npy`` of the values.
