@@ -47,6 +47,7 @@ class Cache:
         log_format: str = '%(asctime)-15s [%(levelname)s]: %(message)s',
         backup_path: Optional[str] = None,
         backup: bool = True,
+        optional_path_keys: Optional[List[str]] = None,
         dump_kwargs:dict = {},
         load_kwargs:dict = {},
         enable_cache_arg_name: Optional[str] = None,
@@ -148,6 +149,11 @@ class Cache:
         backup: bool = True,
             If the cache should backup the result to a .pkl in case of exception during the serializzation.
             This flag is mainly for debug pourpouses.
+        optional_path_keys: Optional[List[str]] = None
+            This argument can be used only if the cache_path is a Dict, otherwise we will raise an
+            exception. Otherwise, if the cache_path is a Dict, this is the list of keys that are
+            optional to dump and/or load. This is used to cache results with possibly
+            missing keys.
         enable_cache_arg_name: Optional[str] = None,
             This paramer specify the name of a boolean argument that, if given
             to the cached function, will enable or disable the caching 
@@ -172,6 +178,17 @@ class Cache:
         if self.enable_cache_arg_name is not None:
             self.args_to_ignore.append(self.enable_cache_arg_name)
 
+        self.optional_path_keys = optional_path_keys
+
+        if self.optional_path_keys is None:
+            self.optional_path_keys = list()
+        else:
+            if not isinstance(self.cache_path, dict):
+                raise ValueError((
+                    "The argument `optional_path_keys` with value '{}' has no "
+                    "meaning if the `cache_path` isn't a dict. `cache_path`='{}'"
+                ).format(self.optional_path_keys, self.cache_path))
+
         self._check_path_sanity(cache_path)
 
     def _check_path_sanity(self, path: Union[str, Tuple[str], List[str], Dict[str, str]]):
@@ -191,6 +208,13 @@ class Cache:
         elif isinstance(path, dict):
             for arg, sub_path in path.items():
                 self._check_path_sanity(sub_path)
+            
+            missing_keys = set(self.optional_path_keys) - set(path.keys())
+            if len(missing_keys) != 0:
+                raise ValueError((
+                    "The `cache_path` dictionary is missing some keys defined in "
+                    "the `optional_path_keys` arg. Specifically: {}"
+                ).format(missing_keys))
         else:
             raise ValueError((
                     "Sorry, the path '{}' is not in one of the supported formats."
@@ -355,8 +379,15 @@ class Cache:
             for key, p in path.items():
                 cache = self._load(p)
 
+                # if we couldn't load the cache
                 if cache is None:
-                    return None
+                    # and it's optional it's fine, go on loading the other ones
+                    if key in self.optional_path_keys:
+                        continue
+                    # else it's an error and we cannot load the required data
+                    # therefore the cache is invalid
+                    else:
+                        return None
 
                 result[key] = cache
             return result
@@ -402,7 +433,22 @@ class Cache:
                 
         elif isinstance(path, dict):
             assert isinstance(result, dict)
-            assert set(result.keys()) == set(path.keys())
+
+            required_keys = set(path.keys()) - set(self.optional_path_keys)
+            missing_keys = required_keys - set(result.keys())
+            if len(missing_keys) != 0:
+                raise ValueError((
+                    "The result of the cached function has keys '{}' that does "
+                    "not match with the required ones '{}'"
+                ).format(result.keys(), required_keys))
+
+            extra_keys = set(result.keys()) - set(path.keys())
+            if len(extra_keys) != 0:
+                raise ValueError((
+                    "The result of the cached function has keys '{}' that does "
+                    "not appear in the defined path. In particular the the "
+                    "extra keys are '{}'"
+                ).format(result.keys(), extra_keys))
 
             for key in result.keys():
                 self._dump(args, kwargs, result[key], path[key], start_time, end_time)
