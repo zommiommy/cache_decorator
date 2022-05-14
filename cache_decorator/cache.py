@@ -422,7 +422,6 @@ class Cache:
         return Backend(self.load_kwargs, self.dump_kwargs).load(metadata.get("backend_metadata", {}), path)
 
     def _dump(self, args, kwargs, result, path, start_time, end_time):
-
         # Check if it's a structured path
         if isinstance(path, list) or isinstance(path, tuple):
             assert isinstance(result,list) or isinstance(result,tuple)
