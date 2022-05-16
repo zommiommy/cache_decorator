@@ -421,18 +421,13 @@ class Cache:
         # actually load the values
         return Backend(self.load_kwargs, self.dump_kwargs).load(metadata.get("backend_metadata", {}), path)
 
-    def _dump(self, args, kwargs, result, path, start_time, end_time):
+    def _check_return_type_compatability(self, result, path):
         # Check if it's a structured path
         if isinstance(path, list) or isinstance(path, tuple):
             assert isinstance(result,list) or isinstance(result,tuple)
             assert len(result) == len(path)
-            for r, p in zip(result, path):
-                self._dump(args, kwargs, r, p, start_time, end_time)
-            return 
-                
         elif isinstance(path, dict):
             assert isinstance(result, dict)
-
             required_keys = set(path.keys()) - set(self.optional_path_keys)
             missing_keys = required_keys - set(result.keys())
             if len(missing_keys) != 0:
@@ -448,7 +443,15 @@ class Cache:
                     "not appear in the defined path. In particular the the "
                     "extra keys are '{}'"
                 ).format(result.keys(), extra_keys))
+            return 
 
+    def _dump(self, args, kwargs, result, path, start_time, end_time):
+        # Check if it's a structured path
+        if isinstance(path, list) or isinstance(path, tuple):
+            for r, p in zip(result, path):
+                self._dump(args, kwargs, r, p, start_time, end_time)
+            return 
+        elif isinstance(path, dict):
             for key in result.keys():
                 self._dump(args, kwargs, result[key], path[key], start_time, end_time)
             return 
@@ -529,13 +532,16 @@ class Cache:
         @wraps(function)
         def wrapped(*args, **kwargs):
             cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
+            # Get the path
+            path = self._get_formatted_path(args, kwargs)
+            
             # if the cache is not enabled just forward the call
             if not cache_enabled:
                 self.logger.info("The cache is disabled")
-                return function(*args, **kwargs)
+                result = function(*args, **kwargs)
+                self._check_return_type_compatability(result, path)
+                return result
 
-            # Get the path
-            path = self._get_formatted_path(args, kwargs)
             # Try to load the cache
             result = self._load(path)
             # if we got a result, reutrn it
@@ -550,6 +556,7 @@ class Cache:
 
             # Save the result
             try:
+                self._check_return_type_compatability(result, path)
                 self._dump(args, kwargs, result, path, start_time, end_time)
             except Exception as e:
                 if self.is_backup_enabled:
