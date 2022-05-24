@@ -3,8 +3,9 @@ import os
 from shutil import rmtree
 from cache_decorator import Cache
 from .utils import standard_test_array
+from dict_hash import Hashable
 
-class A:
+class A(Hashable):
     def __init__(self):
         pass
     
@@ -16,6 +17,9 @@ class A:
     def cached_function(self, a, x):
         sleep(2)
         return [1, 2, 3]
+
+    def consistent_hash(self) -> str:
+        return ""
 
 
 def test_ignore_args_method():

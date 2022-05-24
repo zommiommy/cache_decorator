@@ -134,17 +134,26 @@ To cache a function or a method you just have to decorate it with the cache deco
 
     from time import sleep
     from cache_decorator import Cache
+    from dict_hash import Hashable
 
     @Cache()
     def x(a, b):
         sleep(3)
         return a + b
 
-    class A:
-        @Cache()
+    class A(Hashable):
+        def __init__(self, x):
+        self.x = x
+
+        @Cache(
+            cache_path="{cache_dir}/{self.x}/{a}/{b}.pkl",
+        )
         def x(self, a, b):
             sleep(3)
             return a + b
+                
+        def consistent_hash(self) -> str:
+            return str(self.x)
 
 Cache path
 ----------

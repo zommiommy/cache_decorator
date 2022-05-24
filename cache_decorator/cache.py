@@ -12,13 +12,13 @@ from time import time
 from functools import wraps
 from datetime import datetime
 from typing import Tuple, Callable, Union, Dict, List, Optional
-from .utils import get_params, parse_time, random_string
+from .utils import get_params, parse_time, random_string, get_format_groups
 from .backends import Backend
 
 # Dictionary are not hashable and the python hash is not consistent
 # between runs so we have to use an external dictionary hashing package
 # else we will not be able to load the saved caches.
-from dict_hash import sha256
+from dict_hash import sha256, Hashable
 
 log_levels = {
     "debug":logging.DEBUG,
@@ -527,7 +527,7 @@ class Cache:
             json.dump(metadata, f, indent=4)
 
 
-    def _decorate_callable(self, function: Callable) -> Callable:
+    def _decorate_function(self, function: Callable) -> Callable:
         # wraps to support pickling
         @wraps(function)
         def wrapped(*args, **kwargs):
@@ -571,7 +571,55 @@ class Cache:
         setattr(wrapped, "__cacher_instance", self)
         return wrapped
 
-    def _get_formatted_path(self, args, kwargs, formatter=None, function_info=None, extra_kwargs=None) -> str:
+    def _decorate_method(self, function: Callable) -> Callable:
+        # wraps to support pickling
+        @wraps(function)
+        def wrapped(self, *args, **kwargs):
+            cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
+            # Get the path
+            path = self._get_formatted_path(args, kwargs, inner_self=self)
+            
+            # if the cache is not enabled just forward the call
+            if not cache_enabled:
+                self.logger.info("The cache is disabled")
+                result = function(self, *args, **kwargs)
+                self._check_return_type_compatability(result, path)
+                return result
+
+            # Check that the self is actually hashable
+            if not issubclass(self, Hashable):
+                raise ValueError("Could not has self of class `{}` because it doesn't implement Hashable (from dict_hash).".format(self.__class__.__name__))
+
+            # Try to load the cache
+            result = self._load(path)
+            # if we got a result, reutrn it
+            if result is not None:
+                return result
+            
+            self.logger.info("Computing the result for %s %s", args, kwargs)
+            # otherwise compute the result
+            start_time = time()
+            result = function(*args, **kwargs)
+            end_time = time()
+
+            # Save the result
+            try:
+                self._check_return_type_compatability(result, path)
+                self._dump(args, kwargs, result, path, start_time, end_time)
+            except Exception as e:
+                if self.is_backup_enabled:
+                    raise self._backup(result, path, e, args, kwargs)
+                raise e
+
+            return result
+
+        # add a reference to the cached function so we can unpack
+        # The caching if needed
+        setattr(wrapped, "__cached_function", function)
+        setattr(wrapped, "__cacher_instance", self)
+        return wrapped
+
+    def _get_formatted_path(self, args, kwargs, formatter=None, function_info=None, extra_kwargs=None, inner_self=None) -> str:
         """Compute the path adding and computing the needed arguments."""        
         formatter = formatter or self.cache_path
 
@@ -598,31 +646,41 @@ class Cache:
         function_info = function_info or self.function_info
         params = get_params(function_info, args, kwargs)
         
-        if "_hash" in formatter:
-            params["_hash"] = sha256({"params": params, "function_info": function_info})
+        if "_hash" in get_format_groups(formatter):
+            data = {"params": params, "function_info": function_info}
+
+            if inner_self is not None: 
+                data["self"] = inner_self
+
+            params["_hash"] = sha256(data)
 
         self.logger.debug("Got parameters %s", params)
 
-        # Handle the composite paths
-        for match in re.finditer(r"\{([^\{]+)(:?\..+?)+\}", formatter):
-            # Extract the matching string
-            match = match.group(0)
-            # Get the name of the base element and the attributes chain
-            root, *attrs = match[1:-1].split(".")
-            # Get the params to use for the attributes chain
-            root = params[root]
-            # Follow the attributes chain
-            for attr in attrs:
-                root = getattr(root, attr)
-            # Replace the result in the formatter
-            formatter = formatter.replace(match, str(root))
-
-        # Compute the path of the cache for these parameters
-        path = formatter.format(
-            cache_dir=self.cache_dir,
+        format_args = {
             **params,
             **function_info,
             **extra_kwargs,
+            "cache_dir":self.cache_dir,
+        }
+
+        # Handle the composite paths
+        for match in get_format_groups(formatter):
+            key = match
+
+            # Get the name of the base element and the attributes chain
+            root, *attrs = match.split(".")
+            # Get the params to use for the attributes chain
+            root = format_args[root]
+
+            # Follow the attributes chain
+            for attr in attrs:
+                root = getattr(root, attr)
+
+            format_args[key] = root
+
+        # Compute the path of the cache for these parameters
+        path = formatter.format(
+            **format_args,
         )
         self.logger.debug("Calculated path %s", path)
 
@@ -638,7 +696,12 @@ class Cache:
     def decorate(self, function: Callable) -> Callable:
         self.function_info = self._compute_function_info(function)
         self.decorated_function = function
-        wrapped = self._decorate_callable(function)
+
+        if inspect.ismethod(function):
+            wrapped = self._decorate_method(function)
+        else:
+            wrapped = self._decorate_function(function)
+
         wrapped = self._fix_docs(function, wrapped)
         return wrapped
 
