@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, Any
 
 class BackendTemplate:
     """To serialize and de-serialize data we need double dynamic dispatching, 
@@ -9,11 +9,6 @@ class BackendTemplate:
     backend.load(backend.dump(object, "./test"), "./test") == object
     """
     SUPPORTED_EXTENSIONS = []
-
-    def __init__(self, load_kwargs, dump_kwargs):
-        """The init must always handle kwargs since """
-        self._load_kwargs = load_kwargs
-        self._dump_kwargs = dump_kwargs
 
     @staticmethod
     def support_path(path:str) -> bool:
@@ -32,7 +27,8 @@ class BackendTemplate:
             "This backend function has to be implemented by its subclass."
         )
 
-    def dump(self, obj_to_serialize: object, path:str) -> dict:
+    @staticmethod
+    def dump(obj_to_serialize: object, path:str) -> dict:
         """Serialize and save the object at the given path.
         If this backend needs extra informations to de-serialize data, it can 
         return them as a dictionary which will be serialized as a json."""     
@@ -46,8 +42,8 @@ class BackendTemplate:
         raise NotImplementedError(
             "This backend function has to be implemented by its subclass."
         )
-
-    def load(self, metadata:dict, path:str) -> object:
+    @staticmethod
+    def load(metadata:dict, path:str) -> object:
         """Load the method at the given path. If the medod need extra
         informations it can read them form the metadata dictionary which is
         the return value of the dump method."""

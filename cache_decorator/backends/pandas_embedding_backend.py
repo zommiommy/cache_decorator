@@ -1,6 +1,6 @@
 
 from .backend_template import BackendTemplate
-import warnings
+from typing import Dict, Any
 
 try:
     import pickle
@@ -28,10 +28,7 @@ try:
             ".embedding.bz2":":bz2",
             ".embedding.xz":":xz",
         }
-
-        def __init__(self, load_kwargs, dump_kwargs):
-            super(PandasEmbeddingBackend, self).__init__(load_kwargs, dump_kwargs)
-
+        
         @staticmethod
         def support_path(path: str) -> bool:
             return any(
@@ -49,15 +46,16 @@ try:
                     isinstance(obj_to_serialize, pd.DataFrame) and \
                     is_numeric_dataframe(obj_to_serialize)
 
-        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> dict:
+        @staticmethod
+        def dump(obj_to_serialize: pd.DataFrame, path: str) -> dict:
 
             open_prefix = next(
                 v
-                for k, v in self.SUPPORTED_EXTENSIONS.items()
+                for k, v in PandasEmbeddingBackend.SUPPORTED_EXTENSIONS.items()
                 if path.endswith(k)
             )
 
-            with tarfile.open(path, mode="w" + open_prefix, **self._dump_kwargs) as tar:
+            with tarfile.open(path, mode="w" + open_prefix) as tar:
                 data = pickle.dumps(obj_to_serialize.columns)
                 infos = tarfile.TarInfo("columns.pkl")
                 infos.size = len(data)
@@ -81,8 +79,9 @@ try:
                 "type": "pandas_embedding",
             }
 
-        def load(self, metadata: dict, path: str) -> object:
-            with tarfile.open(path, mode="r", **self._load_kwargs) as tar:
+        @staticmethod
+        def load(metadata: dict, path: str) -> object:
+            with tarfile.open(path, mode="r") as tar:
                 columns = pickle.load(tar.extractfile("columns.pkl"))
                 index = pickle.load(tar.extractfile("index.pkl"))
                 

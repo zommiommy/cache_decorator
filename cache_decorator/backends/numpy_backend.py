@@ -1,6 +1,8 @@
 
+from this import d
 from .backend_template import BackendTemplate
 from .pandas_csv_backend import PandasCsvBackend
+from typing import Dict, Any
 
 try:
     import numpy as np
@@ -17,17 +19,6 @@ try:
         SUPPORTED_EXTENSIONS = [
             ".npy", ".npz"
         ] + ([] if PandasCsvBackend is None else list(PandasCsvBackend.SUPPORTED_EXTENSIONS.keys()))
-
-        def __init__(self, load_kwargs, dump_kwargs):
-            # This is needed if we want to be able to save lists or dict of nparrays
-            if PandasCsvBackend is not None:
-                self._pandas_backend = PandasCsvBackend(
-                    load_kwargs,
-                    dump_kwargs
-                )
-            load_kwargs = load_kwargs.copy()
-            load_kwargs.setdefault("allow_pickle", True)
-            super(NumpyBackend, self).__init__(load_kwargs, dump_kwargs)
 
         @staticmethod
         def support_path(path: str) -> bool:
@@ -51,19 +42,12 @@ try:
             )
 
         @staticmethod
-        def can_deserialize(metadata: dict, path: str) -> bool:
-            pandas_test = PandasCsvBackend is not None and PandasCsvBackend.can_deserialize(
-                metadata,
-                path
-            )
-            return NumpyBackend.support_path(path) and not pandas_test or pandas_test and metadata["type"] == "numpy"
-
-        def dump(self, obj_to_serialize: object, path: str) -> dict:
-            if self._pandas_backend is not None and self._pandas_backend.support_path(path):
+        def dump(obj_to_serialize: object, path: str) -> dict:
+            if PandasCsvBackend is not None and PandasCsvBackend.support_path(path):
                 import pandas as pd
-                metadata = self._pandas_backend.dump(
+                metadata = PandasCsvBackend().dump(
                     pd.DataFrame(obj_to_serialize),
-                    path
+                    path,
                 )
                 metadata["type"] = "numpy"
                 return metadata
@@ -79,12 +63,20 @@ try:
 
             return {"type": str(type(obj_to_serialize))}
 
-        def load(self, metadata: dict, path: str) -> object:
-            if self._pandas_backend is not None and self._pandas_backend.support_path(path):
-                import pandas as pd
-                return self._pandas_backend.load(
+        @staticmethod
+        def can_deserialize(metadata: dict, path: str) -> bool:
+            pandas_test = PandasCsvBackend is not None and PandasCsvBackend.can_deserialize(
+                metadata,
+                path
+            )
+            return NumpyBackend.support_path(path) and not pandas_test or pandas_test and metadata["type"] == "numpy"
+
+        @staticmethod
+        def load(metadata: dict, path: str) -> object:
+            if PandasCsvBackend is not None and PandasCsvBackend.support_path(path):
+                return PandasCsvBackend.load(
                     metadata,
-                    path
+                    path,
                 ).values
             if path.endswith(".npy"):
                 with open(path, "rb") as f:

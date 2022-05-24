@@ -1,4 +1,5 @@
-from typing import Set
+import os
+from typing import Set, Dict, Any
 
 from .txt_backend import TxtBackend
 
@@ -17,9 +18,9 @@ from .keras_model_backend import KerasModelBackend
 from .exceptions import SerializationException, DeserializationException
 
 class Backend:
-    def __init__(self, load_kwargs, dump_kwargs):
+    def __init__(self):
         self.backends = [
-            backend(load_kwargs, dump_kwargs)
+            backend
             for backend in [
                 JsonBackend,
                 CompressJsonBackend,
@@ -55,6 +56,11 @@ class Backend:
         return them as a dictionary which will be serialized as a json."
         If the function returns None or does not return, an empty dictionary
         will be used as metadata."""     
+
+        dirname = os.path.dirname(os.path.abspath(path))
+        if dirname != "":
+            os.makedirs(dirname, exist_ok=True)
+
         for backend in self.backends:
             if backend.can_serialize(obj_to_serialize, path):
                 result = backend.dump(obj_to_serialize, path)

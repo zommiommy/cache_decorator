@@ -1,15 +1,12 @@
-import pytest
-import numpy as np
 from time import sleep
 import os
 from shutil import rmtree
-from cache_decorator import Cache, SerializationException
+from cache_decorator import Cache
 from .utils import standard_test
 
 @Cache(
     cache_path="{cache_dir}/{_hash}.json",
     cache_dir="./test_cache",
-    dump_kwargs={"indent":4},
     backup=False,
 )
 def cached_function(a):

@@ -1,6 +1,7 @@
 
 from .backend_template import BackendTemplate
 import warnings
+from typing import Dict, Any
 
 try:
     import pandas as pd
@@ -66,11 +67,6 @@ try:
             ".ssv.zip": " "
         }
 
-        def __init__(self, load_kwargs, dump_kwargs):
-            load_kwargs = load_kwargs.copy()
-            load_kwargs.setdefault("index_col", 0)
-            super(PandasCsvBackend, self).__init__(load_kwargs, dump_kwargs)
-
         @staticmethod
         def support_path(path: str) -> bool:
             return any(
@@ -86,7 +82,8 @@ try:
         def can_serialize(obj_to_serialize: object, path: str) -> bool:
             return PandasCsvBackend.support_path(path) and isinstance(obj_to_serialize, pd.DataFrame)
 
-        def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> dict:
+        @staticmethod
+        def dump(obj_to_serialize: pd.DataFrame, path: str) -> dict:
 
             for column in obj_to_serialize.columns:
                 if not is_consistent(obj_to_serialize[column]):
@@ -101,14 +98,13 @@ try:
 
             obj_to_serialize.to_csv(
                 path,
-                sep=self.SUPPORTED_EXTENSIONS[
+                sep=PandasCsvBackend.SUPPORTED_EXTENSIONS[
                     next(
                         x
-                        for x in self.SUPPORTED_EXTENSIONS
+                        for x in PandasCsvBackend.SUPPORTED_EXTENSIONS
                         if path.endswith(x)
                     )
-                ],
-                **self._dump_kwargs
+                ]
             )
 
             # Return the types of the columns to be saved as metadata
@@ -122,17 +118,18 @@ try:
                 "columns_names_type": get_vector_dtype(obj_to_serialize.columns),
             }
 
-        def load(self, metadata: dict, path: str) -> object:
+        @staticmethod
+        def load(metadata: dict, path: str) -> object:
             df = pd.read_csv(
                 path,
-                sep=self.SUPPORTED_EXTENSIONS[
+                sep=PandasCsvBackend.SUPPORTED_EXTENSIONS[
                     next(
                         x
-                        for x in self.SUPPORTED_EXTENSIONS
+                        for x in PandasCsvBackend.SUPPORTED_EXTENSIONS
                         if path.endswith(x)
                     )
                 ],
-                **self._load_kwargs
+                index_col=0,
             )
             # Convert back the types of the columns to the original ones
             df = df.astype(metadata["columns_types"])
