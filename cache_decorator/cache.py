@@ -3,7 +3,10 @@ import re
 import os
 import sys
 import json
+import uuid
 import pickle
+
+from numpy import insert
 import humanize
 import datetime
 import inspect
@@ -12,7 +15,7 @@ from time import time
 from functools import wraps
 from datetime import datetime
 from typing import Tuple, Callable, Union, Dict, List, Optional
-from .utils import get_params, parse_time, random_string, get_format_groups
+from .utils import get_params, parse_time, random_string, get_format_groups, get_next_format_group
 from .backends import Backend
 
 # Dictionary are not hashable and the python hash is not consistent
@@ -532,15 +535,16 @@ class Cache:
         @wraps(function)
         def wrapped(*args, **kwargs):
             cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
-            # Get the path
-            path = self._get_formatted_path(args, kwargs)
             
             # if the cache is not enabled just forward the call
             if not cache_enabled:
                 self.logger.info("The cache is disabled")
                 result = function(*args, **kwargs)
-                self._check_return_type_compatability(result, path)
+                self._check_return_type_compatability(result, self.cache_path)
                 return result
+
+            # Get the path
+            path = self._get_formatted_path(args, kwargs)
 
             # Try to load the cache
             result = self._load(path)
@@ -576,15 +580,16 @@ class Cache:
         @wraps(function)
         def wrapped(self, *args, **kwargs):
             cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
-            # Get the path
-            path = self._get_formatted_path(args, kwargs, inner_self=self)
             
             # if the cache is not enabled just forward the call
             if not cache_enabled:
                 self.logger.info("The cache is disabled")
                 result = function(self, *args, **kwargs)
-                self._check_return_type_compatability(result, path)
+                self._check_return_type_compatability(result, self.cache_path)
                 return result
+
+            # Get the path
+            path = self._get_formatted_path(args, kwargs, inner_self=self)
 
             # Check that the self is actually hashable
             if not issubclass(self, Hashable):
@@ -645,8 +650,9 @@ class Cache:
 
         function_info = function_info or self.function_info
         params = get_params(function_info, args, kwargs)
-        
-        if "_hash" in get_format_groups(formatter):
+        groups = get_format_groups(formatter)
+
+        if "_hash" in {match.str_match for match in groups}:
             data = {"params": params, "function_info": function_info}
 
             if inner_self is not None: 
@@ -663,27 +669,46 @@ class Cache:
             "cache_dir":self.cache_dir,
         }
 
+        new_formatter = ""
+        old_formatter = formatter
         # Handle the composite paths
-        for match in get_format_groups(formatter):
-            key = match
+        while len(old_formatter) != 0:
+            new_match, formatter_remainder = get_next_format_group(old_formatter)
 
-            # Get the name of the base element and the attributes chain
-            root, *attrs = match.split(".")
-            # Get the params to use for the attributes chain
-            root = format_args[root]
+            # there are no more matches just append the remainder
+            if new_match is None:
+                new_formatter += formatter_remainder
+                break
+            
+            # check if we should call the value or not
+            if new_match.str_match.endswith("()"):
+                new_match.str_match  = new_match.str_match[:-2]
+                # Get the name of the base element and the attributes chain
+                root, *attrs = new_match.str_match.split(".")
+                # Get the params to use for the attributes chain
+                root = format_args[root]
 
-            # Follow the attributes chain
-            for attr in attrs:
-                root = getattr(root, attr)
+                # Follow the attributes chain
+                for attr in attrs:                    
+                    root = getattr(root, attr)
 
-            format_args[key] = root
+                # Check if we have to call the function or not
+                if inspect.isfunction(root) or inspect.ismethod(root):
+                    root = root()
 
-        # Compute the path of the cache for these parameters
-        path = formatter.format(
+                sub = str(root)
+            else:
+                sub = "{" + new_match.str_match + "}"
+
+            new_formatter += old_formatter[:new_match.start]
+            new_formatter += sub
+            old_formatter = formatter_remainder
+
+        path = new_formatter.format(
             **format_args,
         )
         self.logger.debug("Calculated path %s", path)
-
+        print(path)
         return path
 
     def _fix_docs(self, function: Callable, wrapped: Callable) -> Callable:

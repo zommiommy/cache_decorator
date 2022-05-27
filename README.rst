@@ -145,13 +145,43 @@ To cache a function or a method you just have to decorate it with the cache deco
         def __init__(self, x):
         self.x = x
 
+        # you can call a method without args
+        def my_method(self):
+            return "|{}|".format(self.x)
+
+        # you can call a static method
+        @staticmethod
+        def my_staticmethod():
+            return "CIAO"
+
+        # you can call a property
+        @property
+        def my_property(self):
+            return "|{}|".format(self.x)
+
+        # methods, static methods, and properties can return a custom formatter
+        # that access attributes but can't call other methods
+        def custom_formatter_method(self):
+            return "{self.x:.4f}"
+
         @Cache(
-            cache_path="{cache_dir}/{self.x}/{a}/{b}.pkl",
+            # this is a quick example of most things you can do in the formatting
+            cache_path="/".join(
+                "{cache_dir}",
+                "{self.x}",
+                "{self.my_method()}",
+                "{self.my_staticmethod()}",
+                "{self.my_property()}",
+                "{self.custom_formatter_method()}",
+                "{a}",
+                "{b}_{_hash}.pkl",
+            )
         )
-        def x(self, a, b):
+        def f(self, a, b):
             sleep(3)
             return a + b
                 
+        # only needed if you want "{_hash}" in the path
         def consistent_hash(self) -> str:
             return str(self.x)
 

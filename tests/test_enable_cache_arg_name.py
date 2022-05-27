@@ -5,6 +5,11 @@ from .utils import standard_test_array
 import numpy as np
 from time import perf_counter
 
+def timeit(func, *args, **kwargs):
+    start = perf_counter()
+    cached_function(*args, **kwargs)
+    return perf_counter() - start
+    
 @Cache(
     cache_dir="./test_cache",
     enable_cache_arg_name="enable_cache",
@@ -13,13 +18,15 @@ def cached_function(a):
     sleep(2)
     return [1, 2, 3]
 
-def timeit(func, *args, **kwargs):
-    start = perf_counter()
-    cached_function(*args, **kwargs)
-    return perf_counter() - start
-    
+class NonHashable:
+    def __hash__(self) -> int:
+        raise ValueError("THIS CLASS IS NOT HASHABLE")
 
-def test_ensable_cache_arg_name():
+def test_enable_cache_arg_name_doesnt_compute_hash():
+    # if the cache is disabled we can pass non-hashable args
+    cached_function(NonHashable(), enable_cache=False)
+
+def test_enable_cache_arg_name():
     # both computed
     it0 = timeit(cached_function, 0)
     it1 = timeit(cached_function, 1)
