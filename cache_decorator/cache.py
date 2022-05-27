@@ -393,7 +393,7 @@ class Cache:
             root = getattr(root, attr)
 
         # Check if we have to call the function or not
-        if inspect.isfunction(root) or inspect.ismethod(root):
+        if inspect.isfunction(root) or inspect.ismethod(root) or inspect.isbuiltin(root):
             root = root()
 
         return root, args, kwargs
@@ -731,7 +731,7 @@ class Cache:
                     root = getattr(root, attr)
 
                 # Check if we have to call the function or not
-                if inspect.isfunction(root) or inspect.ismethod(root):
+                if inspect.isfunction(root) or inspect.ismethod(root) or inspect.isbuiltin(root):
                     root = root()
 
                 sub = str(root)
