@@ -1,4 +1,5 @@
 
+from multiprocessing.sharedctypes import Value
 import re
 import os
 import sys
@@ -352,13 +353,50 @@ class Cache:
     def _get_metadata_path(self, path):
         return path + ".metadata"
 
-    def _is_cache_enabled(self, args, kwargs):
+    def _is_cache_enabled(self, args, kwargs, inner_self = None):
+        # if enable_cache_arg_name is not defined, then forward
         if self.enable_cache_arg_name is None:
             return True, args, kwargs
 
-        cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
+        # if the arg is in the kwargs, ez, pop the value and retrun
+        if self.enable_cache_arg_name in kwargs:
+            cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
+            return cache_enabled, args, kwargs
 
-        return cache_enabled, args, kwargs
+        # Normalize args and kwargs
+        params = get_params(self.function_info, args, kwargs)
+
+        # # if it was in the args, we need to remove it from there 
+        # if self.enable_cache_arg_name in params:
+        #     cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
+        #     return cache_enabled, args, kwargs
+
+        # Add the self if we are in a method
+        if inner_self is not None:
+            params["self"] = inner_self
+
+        # otherwise it's either an attribute or method call we should resolve
+
+        # Get the name of the base element and the attributes chain
+        root, *attrs = self.enable_cache_arg_name.strip("()").split(".")
+
+        # This means that the parameter was setted but the arg wasn't passed
+        # so we should default to true
+        if root not in params:
+            return True, args, kwargs
+
+        # Get the params to use for the attributes chain
+        root = params[root]
+        
+        # Follow the attributes chain
+        for attr in attrs:                    
+            root = getattr(root, attr)
+
+        # Check if we have to call the function or not
+        if inspect.isfunction(root) or inspect.ismethod(root):
+            root = root()
+
+        return root, args, kwargs
 
     def _load(self, path):
 
@@ -579,7 +617,7 @@ class Cache:
         # wraps to support pickling
         @wraps(function)
         def wrapped(self, *args, **kwargs):
-            cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs)
+            cache_enabled, args, kwargs = self._is_cache_enabled(args, kwargs, inner_self=self)
             
             # if the cache is not enabled just forward the call
             if not cache_enabled:
@@ -708,7 +746,6 @@ class Cache:
             **format_args,
         )
         self.logger.debug("Calculated path %s", path)
-        print(path)
         return path
 
     def _fix_docs(self, function: Callable, wrapped: Callable) -> Callable:

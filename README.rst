@@ -287,6 +287,102 @@ Multiple arguments can be specified as a list of strings with the name of the ar
             print("HEY")
         return a
 
+Dynamically enabling the cache
+------------------------------
+Sometime we need to enable or disable the cache dinamically, we soupport this 
+using the `enable_cache_arg_name` argument which can be used as follows:
+
+.. code:: python
+
+    import time
+    import numpy as np
+    import pandas as pd
+    from cache_decorator import Cache
+
+    # simple boolean argument
+
+    @Cache(
+        enable_cache_arg_name="enable_cache",
+    )
+    def function_to_cache(seed: int):
+        np.random.seed(seed)
+        return {"seed":seed}
+
+    # Cache enabled
+    function_to_cache(10)
+    # Cache enabled
+    function_to_cache(10, enable_cache=True)
+    # Cache disabled
+    function_to_cache(10, enable_cache=False)
+
+    class TestEnableCacheArgAsAttribute:
+        def __init__(self, enable_cache: bool):
+            self.enable_cache = enable_cache
+        
+        @Cache(
+            cache_path="{cache_dir}/{a}.pkl",
+            cache_dir="./test_cache",
+            enable_cache_arg_name="self.enable_cache",
+        )
+        def cached_method(self, a):
+            sleep(2)
+            return [1, 2, 3]
+
+    instance = TestEnableCacheArgAsAttribute(enable_cache=True)
+    # with cache enabled
+    instance.cached_method(1)
+    # disable the cache
+    instance.enable_cache = False
+    instance.cached_method(1)
+
+
+    class TestEnableCacheArgAsAttributeProperty:
+        def __init__(self, enable_cache: bool):
+            self.enable_cache = enable_cache
+        
+        @property
+        def is_cache_enabled(self):
+            return self.enable_cache
+
+        @Cache(
+            cache_path="{cache_dir}/{a}.pkl",
+            cache_dir="./test_cache",
+            enable_cache_arg_name="self.is_cache_enabled()",
+        )
+        def cached_method(self, a):
+            sleep(2)
+            return [1, 2, 3]
+
+    instance = TestEnableCacheArgAsAttribute(enable_cache=True)
+    # with cache enabled
+    instance.cached_method(1)
+    # disable the cache
+    instance.enable_cache = False
+    instance.cached_method(1)
+
+    class TestEnableCacheArgAsAttributeStatic:
+        """This can be used for abstract classes"""
+        def __init__(self, enable_cache: bool):
+            self.enable_cache = enable_cache
+        
+        @staticmethod
+        def is_cache_enabled():
+            return True
+
+        @Cache(
+            cache_path="{cache_dir}/{a}.pkl",
+            cache_dir="./test_cache",
+            enable_cache_arg_name="self.is_cache_enabled()",
+        )
+        def cached_method(self, a):
+            sleep(2)
+            return [1, 2, 3]
+
+    instance = TestEnableCacheArgAsAttributeStatic(enable_cache=True)
+    instance.cached_method(1)
+    
+for more examples of usage check the tests: `test/test_method.py` and `test/test_enable_cache_arg_name.py`.
+
 Cache validity
 ------------------------------------------
 Cache also might have a validity duration. 
