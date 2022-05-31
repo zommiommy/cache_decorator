@@ -16,7 +16,10 @@ from time import time
 from functools import wraps
 from datetime import datetime
 from typing import Tuple, Callable, Union, Dict, List, Optional
-from .utils import get_params, parse_time, random_string, get_format_groups, get_next_format_group
+from .utils import (
+    get_params, parse_time, random_string, get_format_groups, 
+    get_next_format_group, get_function_name,
+)
 from .backends import Backend
 
 # Dictionary are not hashable and the python hash is not consistent
@@ -289,7 +292,7 @@ class Cache:
 
         function_info = {
             # Name of the function
-            "function_name": function.__name__,
+            "function_name": get_function_name(function),
             # Arguments names
             "args": function_args_specs.args or [],
             "defaults": function_args_specs.defaults or [],
@@ -767,7 +770,7 @@ class Cache:
         # Copy the doc of decoreated function
         wrapped.__doc__ = function.__doc__
         # Copy the name of the function and add the suffix _cached
-        wrapped.__name__ = function.__name__ + "_cached"
+        wrapped.__name__ = get_function_name(function) + "_cached"
         return wrapped
 
     def decorate(self, function: Callable) -> Callable:
@@ -783,7 +786,7 @@ class Cache:
         return wrapped
 
     def __call__(self, function):
-        self.logger = logging.getLogger(__name__ + "." + function.__name__)
+        self.logger = logging.getLogger(__name__ + "." + get_function_name(function))
         # Do not re-initialize loggers if we have to cache multiple functions
         # with the same name
         if not self.logger.hasHandlers():
