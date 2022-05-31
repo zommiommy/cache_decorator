@@ -55,6 +55,7 @@ class Cache:
         dump_kwargs:dict = {},
         load_kwargs:dict = {},
         enable_cache_arg_name: Optional[str] = None,
+        capture_enable_cache_arg_name: bool = True,
     ):
         """
         Cache the results of a function (or method).
@@ -164,6 +165,11 @@ class Cache:
             dynamically. If the argument is not passed the cache will be 
             enabled by default. This argument, if passed, will automatically be
             added to the `args_to_ignore` so that it doesn't ruin the caching.
+            Currently, this can **only** be a kwarg, in future releases I will
+            implement it also for args.
+        capture_enable_cache_arg_name: bool = True,
+            If this parameter is set, the cache will capture the enable cache arg
+            and NOT pass it to the decorated function.
         """
         self.log_level = log_level
         self.log_format = log_format
@@ -178,9 +184,7 @@ class Cache:
 
         self.load_kwargs, self.dump_kwargs = load_kwargs, dump_kwargs
         self.enable_cache_arg_name = enable_cache_arg_name
-
-        if self.enable_cache_arg_name is not None:
-            self.args_to_ignore.append(self.enable_cache_arg_name)
+        self. capture_enable_cache_arg_name = capture_enable_cache_arg_name
 
         self.optional_path_keys = optional_path_keys
 
@@ -360,12 +364,16 @@ class Cache:
 
         # if the arg is in the kwargs, ez, pop the value and retrun
         if self.enable_cache_arg_name in kwargs:
-            cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
+            if self.capture_enable_cache_arg_name:
+                cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
+            else:
+                cache_enabled = kwargs[self.enable_cache_arg_name]
             return cache_enabled, args, kwargs
 
         # Normalize args and kwargs
         params = get_params(self.function_info, args, kwargs)
 
+        # TODO!: implement this
         # # if it was in the args, we need to remove it from there 
         # if self.enable_cache_arg_name in params:
         #     cache_enabled = kwargs.pop(self.enable_cache_arg_name, True)
