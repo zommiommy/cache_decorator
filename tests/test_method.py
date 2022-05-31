@@ -67,7 +67,7 @@ class NonHashableClassShouldPanic:
 
 def test_method_NonHashableClassShouldPanic():
     a = NonHashableClassShouldPanic(2)
-    with pytest.raises(ValueError):
+    with pytest.raises(NotImplementedError):
         a.cached_function(10)
 
 class CallLocalMethod:

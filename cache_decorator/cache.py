@@ -47,6 +47,7 @@ class Cache:
         cache_dir: Optional[str] = None,
         validity_duration: Union[int, str] = -1,
         use_source_code: bool = True,
+        use_approximated_hash: bool = False,
         log_level: str = "critical",
         log_format: str = '%(asctime)-15s [%(levelname)s]: %(message)s',
         backup_path: Optional[str] = None,
@@ -122,6 +123,10 @@ class Cache:
             a given ammount of s(econds), m(inutes), h(ours), d(ays), w(eeks). 
         use_source_code: bool = True,
             If in the computing of the hash the must also use the sourcecode of the cached function.
+        use_approximated_hash: bool = False,
+            `dict_hash` exposes an `use_approximation` arg that allows for faster
+            hashes at the cost of less precision because it only hashes part
+            of the big parameters like big dataframes of numpy arrays.
         log_level: str = "critical",
             Set the logger level to the wanted level. The usable levels are:
             ["debug", "info", "warning", "error", "critical"]
@@ -176,6 +181,7 @@ class Cache:
         self.args_to_ignore = list(args_to_ignore)
         self.use_source_code = use_source_code
         self.validity_duration = parse_time(validity_duration)
+        self.use_approximated_hash = use_approximated_hash
 
         self.cache_path = cache_path
         self.is_backup_enabled = backup
@@ -697,14 +703,15 @@ class Cache:
         function_info = function_info or self.function_info
         params = get_params(function_info, args, kwargs)
         groups = get_format_groups(formatter)
+        groups_set = {match.str_match for match in groups}
 
-        if "_hash" in {match.str_match for match in groups}:
+        if "_hash" in groups_set:
             data = {"params": params, "function_info": function_info}
 
             if inner_self is not None: 
                 data["self"] = inner_self
 
-            params["_hash"] = sha256(data)
+            params["_hash"] = sha256(data, use_approximation=self.use_approximated_hash)
 
         self.logger.debug("Got parameters %s", params)
 

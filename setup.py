@@ -36,21 +36,6 @@ test_deps =[
     "codacy-coverage"
 ]
 
-extras = {
-    'test': test_deps,
-    "numpy":["numpy", "dict_hash[numpy]"],
-    "pandas":["pandas", "dict_hash[pandas]"],
-    "excel":["openpyxl", "xlrd"],
-    "numba":["dict_hash[numba]"],
-}
-
-extras["all"] = ["dict_hash[all]"] + [
-    x
-    for k, v in extras.items()
-    for x in v
-    if k != "test"
-]
-
 setup(
     name='cache_decorator',
     version=__version__,
@@ -71,7 +56,7 @@ setup(
     tests_require=test_deps,
     # Add here the package dependencies
     install_requires=[
-        "dict_hash >= 1.1.20",  # This is used to get a consistent hash of the arguments
+        "dict_hash >= 1.1.21",  # This is used to get a consistent hash of the arguments
         "humanize >= 3.4.1",    # This is used for the metadata to be readable
 
         # The following packages have no dependancies so it should be safe to add
@@ -79,5 +64,4 @@ setup(
         "compress_json>=1.0.4",        # For compressed json
         "deflate_dict",         # To save arguments to the json
     ],
-    extras_require=extras,
 )

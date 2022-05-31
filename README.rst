@@ -1,25 +1,23 @@
 cache_decorator
 =========================================================================================
-|travis| |sonar_quality| |sonar_maintainability| |codacy|
-|code_climate_maintainability| |pip| |downloads|
+|pip| |downloads|
 
 A simple decorator to cache the results of computationally heavy functions.
 The package automatically serialize and deserialize depending on the format of the save path.
 
-By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz .pkl.bz .pkl.lzma .pkl.zip`` but other extensions can be enabled by using the extra feature:
+By default it supports ``.json .json.gz .json.bz .json.lzma`` and ``.pkl .pkl.gz .pkl.bz .pkl.lzma .pkl.zip`` 
+but other extensions can be used if the following packages are installed:
 
-[numpy] ``.npy .npz``
+numpy: ``.npy .npz``
 
-[pandas] ``.csv .csv.gz .csv.bz2 .csv.zip .csv.xz``
+pandas: ``.csv .csv.gz .csv.bz2 .csv.zip .csv.xz``
 
 Also there is an optimized format for numerical dataframes:
 
-[pandas] ``.embedding .embedding.gz .embedding.bz2 .embedding.xz``
+pandas: ``.embedding .embedding.gz .embedding.bz2 .embedding.xz``
 
 This creates an optionally compressed tar archive with pickles of the index and 
 columns and a ``.npy`` of the values.
-
-The extra feature ``[numba]`` enables the caching of numba objects.
 
 .. code:: python
 
@@ -57,74 +55,6 @@ As usual, just download it using pip:
 
     pip install cache_decorator
 
-To install **all** the extensions use:
-
-.. code:: shell
-
-    pip install "cache_decorator[all]"
-
-(the double quotes are optional in ``bash`` but required by ``zsh``)
-
-Optionally you can specify the single features you want:
-
-.. code:: shell
-
-    pip install "cache_decorator[numpy, pandas, numba]"
-
-If the installation fails you can try to add ``--user`` at the end of the command as:
-
-.. code:: shell
-
-    pip install "cache_decorator[numpy, pandas, numba]" --user
-
-
-Tests Coverage
-----------------------------------------------
-Since some software handling coverages sometime
-get slightly different results, here's three of them:
-
-|coveralls| |sonar_coverage| |code_climate_coverage|
-
-
-.. |travis| image:: https://travis-ci.org/zommiommy/cache_decorator.png
-   :target: https://travis-ci.org/zommiommy/cache_decorator
-   :alt: Travis CI build
-
-.. |sonar_quality| image:: https://sonarcloud.io/api/project_badges/measure?project=zommiommy_cache_decorator&metric=alert_status
-    :target: https://sonarcloud.io/dashboard/index/zommiommy_cache_decorator
-    :alt: SonarCloud Quality
-
-.. |sonar_maintainability| image:: https://sonarcloud.io/api/project_badges/measure?project=zommiommy_cache_decorator&metric=sqale_rating
-    :target: https://sonarcloud.io/dashboard/index/zommiommy_cache_decorator
-    :alt: SonarCloud Maintainability
-
-.. |sonar_coverage| image:: https://sonarcloud.io/api/project_badges/measure?project=zommiommy_cache_decorator&metric=coverage
-    :target: https://sonarcloud.io/dashboard/index/zommiommy_cache_decorator
-    :alt: SonarCloud Coverage
-
-.. |coveralls| image:: https://coveralls.io/repos/github/zommiommy/cache_decorator/badge.svg?branch=master
-    :target: https://coveralls.io/github/zommiommy/cache_decorator?branch=master
-    :alt: Coveralls Coverage
-
-.. |pip| image:: https://badge.fury.io/py/cache-decorator.svg
-    :target: https://badge.fury.io/py/cache-decorator
-    :alt: Pypi project
-
-.. |downloads| image:: https://pepy.tech/badge/cache_decorator
-    :target: https://pepy.tech/badge/cache_decorator
-    :alt: Pypi total project downloads
-
-.. |codacy| image:: https://api.codacy.com/project/badge/Grade/70b54eb55b1c4d0182fbfbaa4e36b87d
-    :target: https://www.codacy.com/manual/zommiommy/cache_decorat +or?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=zommiommy/cache_decorator&amp;utm_campaign=Badge_Grade
-    :alt: Codacy Maintainability
-
-.. |code_climate_maintainability| image:: https://api.codeclimate.com/v1/badges/888ccd8cdcf5a7b2acca/maintainability
-    :target: https://codeclimate.com/github/zommiommy/cache_decorator/maintainability
-    :alt: Maintainability
-
-.. |code_climate_coverage| image:: https://api.codeclimate.com/v1/badges/888ccd8cdcf5a7b2acca/test_coverage
-    :target: https://codeclimate.com/github/zommiommy/cache_decorator/test_coverage
-    :alt: Code Climate Coverate
 
 Examples of Usage
 ----------------------------------------------
@@ -661,3 +591,11 @@ For this reason is important to either use a simpler serializzation scheme like 
     chmod -r 600 ./cache
 
 This way only the current application can create and modify the cache files.
+
+.. |pip| image:: https://badge.fury.io/py/cache-decorator.svg
+    :target: https://badge.fury.io/py/cache-decorator
+    :alt: Pypi project
+
+.. |downloads| image:: https://pepy.tech/badge/cache_decorator
+    :target: https://pepy.tech/badge/cache_decorator
+    :alt: Pypi total project downloads
