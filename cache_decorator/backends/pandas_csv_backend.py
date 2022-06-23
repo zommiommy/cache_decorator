@@ -114,16 +114,23 @@ try:
             # Return the types of the columns to be saved as metadata
             return {
                 "type": "pandas",
-                "columns_types": {
-                    column: get_vector_dtype(obj_to_serialize[column])
+                "columns_types": [
+                    get_vector_dtype(obj_to_serialize[column])
                     for column in obj_to_serialize.columns
-                },
+                ],
+                "columns": [
+                    column
+                    for column in obj_to_serialize.columns
+                ],
                 "index_type": get_vector_dtype(obj_to_serialize.index),
-                "columns_names_type": get_vector_dtype(obj_to_serialize.columns),
+                "columns_names_type": [
+                    str(column.__class__.__name__)
+                    for column in obj_to_serialize.columns
+                ],
             }
 
         def load(self, metadata: dict, path: str) -> object:
-            df = pd.read_csv(
+            df: pd.DataFrame = pd.read_csv(
                 path,
                 sep=self.SUPPORTED_EXTENSIONS[
                     next(
@@ -134,10 +141,41 @@ try:
                 ],
                 **self._load_kwargs
             )
+
+            # Restore the columns to the original dtypes.
+            new_columns = []
+            for column, dtype in zip(metadata["columns"], metadata["columns_names_type"]):
+                if dtype == "float":
+                    column = float(column)
+                if dtype == "str":
+                    column = str(column)
+                elif dtype == "int":
+                    column = int(column)
+                elif dtype == "tuple":
+                    column = tuple(column)
+                elif dtype == "list":
+                    column = list(column)
+                else:
+                    raise NotImplementedError(
+                        (
+                            "Encountered a column with an unsupported "
+                            "dtype. Specifically, the column name is {} "
+                            "and the dtype is {}."
+                        ).format(column, dtype)
+                    )
+                new_columns.append(column)
+
+            df.columns = new_columns
+
             # Convert back the types of the columns to the original ones
-            df = df.astype(metadata["columns_types"])
+            df.astype({
+                column: dtype
+                for column, dtype in zip(df.columns, metadata["columns_types"])
+            })
+            
+            # Restore the index to the original dtypes.
             df.index = df.index.astype(metadata["index_type"])
-            df.columns = df.columns.astype(metadata["columns_names_type"])
+
             return df
 
 except ModuleNotFoundError:

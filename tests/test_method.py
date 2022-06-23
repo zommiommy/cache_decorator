@@ -51,25 +51,6 @@ def test_HashableClass():
     if os.path.exists("./test_cache"):
         rmtree("./test_cache")
 
-class NonHashableClassShouldPanic:
-    """Test that we can't hash the class if the self don't implement Hashable"""
-    def __init__(self, x):
-        self.x = x
-    
-    @Cache(
-        cache_path="{cache_dir}/{a}_{_hash}.pkl",
-        cache_dir="./test_cache",
-        backup=False,
-    )
-    def cached_function(self, a):
-        sleep(2)
-        return [1, 2, 3]
-
-def test_method_NonHashableClassShouldPanic():
-    a = NonHashableClassShouldPanic(2)
-    with pytest.raises(NotImplementedError):
-        a.cached_function(10)
-
 class CallLocalMethod:
     def __init__(self, name):
         self.name = name
