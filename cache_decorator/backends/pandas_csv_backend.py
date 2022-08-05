@@ -96,9 +96,6 @@ try:
             if not is_consistent(obj_to_serialize.index):
                 warnings.warn("The index" + common_message)
 
-            if not is_consistent(obj_to_serialize.columns):
-                warnings.warn("The column names" + common_message)
-
             obj_to_serialize.to_csv(
                 path,
                 sep=self.SUPPORTED_EXTENSIONS[
