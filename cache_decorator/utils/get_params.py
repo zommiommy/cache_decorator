@@ -1,7 +1,7 @@
-
+from copy import deepcopy
 
 def get_params(function_info, args, kwargs):
-    params = {}
+    params = deepcopy(kwargs)
 
     # add args default
     if function_info["defaults"]:
@@ -17,6 +17,14 @@ def get_params(function_info, args, kwargs):
         **kwargs
     }
     params.update(args_and_kwargs)
+
+    # This might cause collisions but FFS
+    params.update({
+        "__positional_arg_{}".format(i):arg
+        for i, arg in enumerate(args[
+            len(function_info["args"]):len(args)-len(function_info["defaults"])
+        ])
+    })
 
     # Remove the arguments to ignore if present
     for arg in function_info["args_to_ignore"]:
