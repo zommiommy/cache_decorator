@@ -1,7 +1,5 @@
-from copy import deepcopy
-
 def get_params(function_info, args, kwargs):
-    params = deepcopy(kwargs)
+    params = kwargs.copy()
 
     # add args default
     if function_info["defaults"]:
