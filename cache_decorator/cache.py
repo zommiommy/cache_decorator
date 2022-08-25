@@ -473,7 +473,10 @@ class Cache:
         if self.validity_duration is not None:
             enlapsed_time = time() - metadata.get("creation_time", float("-inf"))
             if  enlapsed_time > self.validity_duration:
-                os.remove(path)
+                try:
+                    os.remove(path)
+                except:
+                    pass
                 return None 
 
         # actually load the values
