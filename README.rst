@@ -582,6 +582,19 @@ Or, since Pickle is a "programming language" which is executed by a VM, we can w
     
     # Test it
     pickle.load(x)
+    
+Or you can just call eval and execute arbitrary python code:
+.. code:: python
+
+    import pickle
+    
+    code = "print('ciao')"
+    
+    pickle.loads(b"".join([
+        b"c__builtin__\neval\n(",
+        pickle.dumps(code, protocol=0)[:-1],
+        b"tR."
+    ]))
 
 For this reason is important to either use a simpler serializzation scheme like json and to fortify the system by setting the cache dir to be read-write only for the current user.
 
