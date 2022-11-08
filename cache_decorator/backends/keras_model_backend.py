@@ -65,5 +65,9 @@ try:
                     tar_handle.extractall(tmpdirname)
                 return load_model(tmpdirname, **self._load_kwargs)
 
-except ModuleNotFoundError:
+# We need to check both for `ModuleNotFoundError`, where
+# simply the TensorFlow package is not installed, and
+# a more obscure `TypeError` caused by occasional internal
+# errors of TensorFlow when it is not properly installed.
+except (ModuleNotFoundError, TypeError):
     KerasModelBackend = None

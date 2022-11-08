@@ -91,7 +91,8 @@ try:
             for column in obj_to_serialize.columns:
                 if not is_consistent(obj_to_serialize[column]):
                     warnings.warn("The column '{}'".format(
-                        column) + common_message)
+                        column
+                    ) + common_message)
 
             if not is_consistent(obj_to_serialize.index):
                 warnings.warn("The index" + common_message)
