@@ -26,6 +26,8 @@ try:
         if series.dtype != "object":
             return True
 
+        
+
         expected_type = str(type(series.values[0]))
         return all(
             expected_type == str(type(s))
@@ -87,12 +89,6 @@ try:
             return PandasCsvBackend.support_path(path) and isinstance(obj_to_serialize, pd.DataFrame)
 
         def dump(self, obj_to_serialize: pd.DataFrame, path: str) -> dict:
-
-            for column in obj_to_serialize.columns:
-                if not is_consistent(obj_to_serialize[column]):
-                    warnings.warn("The column '{}'".format(
-                        column
-                    ) + common_message)
 
             if not is_consistent(obj_to_serialize.index):
                 warnings.warn("The index" + common_message)
