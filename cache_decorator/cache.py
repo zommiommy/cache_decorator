@@ -7,7 +7,6 @@ import json
 import uuid
 import pickle
 
-from numpy import insert
 import humanize
 import datetime
 import inspect
