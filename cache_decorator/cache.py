@@ -720,11 +720,15 @@ class Cache:
 
         self.logger.debug("Got parameters %s", params)
 
+        cache_dir = self.cache_dir
+        if formatter != self.cache_dir:
+            cache_dir = self._get_formatted_path(args, kwargs, self.cache_dir, function_info, extra_kwargs, inner_self)
+            
         format_args = {
             **params,
             **function_info,
             **extra_kwargs,
-            "cache_dir":self.cache_dir,
+            "cache_dir":cache_dir,
         }
 
         new_formatter = ""
